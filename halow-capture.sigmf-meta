@@ -1,0 +1,15 @@
+{
+  "global": {
+    "core:datatype": "cf32_le",
+    "core:sample_rate": 10000000.0,
+    "core:version": "1.0.0",
+    "core:author": "Sam Miller",
+    "core:description": "capture channel 48 between two Alfa HaLow-U nodes, no encryption"
+  },
+  "captures": [
+    {
+      "core:sample_start": 0
+    }
+  ],
+  "annotations": []
+}

@@ -1,0 +1,22 @@
+{
+  "global": {
+    "core:datatype": "cf32_le",
+    "core:sample_rate": 10000000.0,
+    "core:version": "1.0.0",
+    "core:author": "Sam Miller",
+    "core:description": "capture channel 48 between two Alfa HaLow-U nodes, no encryption",
+    "core:recorder": "GNU Radio 3.10.4, halow-capture.grc"
+  },
+  "captures": [
+    {
+      "core:sample_start": 0,
+      "core:datetime": "2024-06-12T22:20:00.000Z",
+      "core:frequency": 918000000.0
+    }
+  ],
+  "annotations": [
+    {
+      "core:comment": "gnuradioconf is the mesh network name of the HaLow-U network."
+    }
+  ]
+}
