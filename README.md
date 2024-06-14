@@ -12,7 +12,7 @@ gr-halow is a first-of-its-kind implementation of IEEE 802.11ah Wi-Fi HaLow in G
 
 IEEE 802.11ah, also known as Wi-Fi HaLow, is an implementation of Wi-Fi in sub-1GHz bands. Due to its lower operating frequency than traditional Wi-Fi, Wi-Fi HaLow trades dimished data rates for longer transmission distances. This balance is favorable to internet-of-things (IoT) and other long-range applications. Read more about Wi-Fi HaLow on The Wi-Fi Alliance's website: [https://www.wi-fi.org/discover-wi-fi/wi-fi-certified-halow](https://www.wi-fi.org/discover-wi-fi/wi-fi-certified-halow).
 
-You can view the IEEE Medium Access Control (MAC) and Physical Layer (PHY) specification for 802.11ah here: [https://ieeexplore.ieee.org/browse/standards/reading-room/page/viewer?id=9363693](https://ieeexplore.ieee.org/browse/standards/reading-room/page/viewer?id=9363693). It is free to access through the IEEE REading Room after creating an IEEE account. In case the link dies, the title of the document is "Part 11: Wireless LAN Medium Access Control (MAC) and Physical Layer (PHY) Specifications." It is the December 2020 revision of the 2016 standard.
+You can view the IEEE Medium Access Control (MAC) and Physical Layer (PHY) specification for 802.11ah here: [https://ieeexplore.ieee.org/browse/standards/reading-room/page/viewer?id=9363693](https://ieeexplore.ieee.org/browse/standards/reading-room/page/viewer?id=9363693). It is free to access through the IEEE REading Room after creating an IEEE account. Chapter 23 specifically pertains to Sub 1GHz PHY. In case the link dies, the title of the document is "Part 11: Wireless LAN Medium Access Control (MAC) and Physical Layer (PHY) Specifications." It is the December 2020 revision of the 2016 standard.
 
 ## How Do I Use It?
 
