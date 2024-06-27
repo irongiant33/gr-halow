@@ -8,9 +8,12 @@ according to docs, MCS 10 is BPSK with R = 1/2 with 2x repetition. This differs 
 
 ![mcs](media/mcs-nsss.png)
 
+based off of the `halow-capture.sigmf-data` looking at the symbol crossings (or what I'm guessing are the symbol crossings) on the time sink, I think the sps is somewhere between 16 and 20 which would be a 500kbps or 650kbps signal.
+
 ## Todo
 
 - [ ] Range testing at this channel, propagation analysis model
 - [ ] how can you determine whether there is 1 or multiple spatial streams? 
 - [ ] is there a way to verify on the HaLow which MCS index is being used? It might be automatically negotiated based on what is available; will also have to read through the specification more to determine if this is the case. What worries me is that the network config picture shows that the TX and RX rate is 6 Mbps which means that the HaLow's may have negotiated for multiple spatial streams and a higher MCS. Just with a cursory look, it seems like this time domain plot is multi-level phase shift keying. For BPSK I would expect constant amplitude
 ![time domain](media/time-domain-halow-capture.jpg)
+- [ ] how to determine SPS?
