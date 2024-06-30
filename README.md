@@ -54,6 +54,14 @@ Below are some example applications of `gr-halow`. See the [resources](#resource
 
 ## Resources
 
+### Software
+
+1. (I was not able to get this to build) imec-idlab HaLow visualizer and emulator for [NS3](https://www.nsnam.org/)
+    - IEEE 802.11ah implementation for NS3: [https://github.com/imec-idlab/IEEE-802.11ah-ns-3](https://github.com/imec-idlab/IEEE-802.11ah-ns-3)
+	- IEEE 802.11ah visualizer for NS3: [https://github.com/imec-idlab/ahVisualizer](https://github.com/imec-idlab/ahVisualizer)
+2. (untested) BATMAN 802.11s over HaLow: [https://github.com/manikmakki/batman-over-halow/tree/main](https://github.com/manikmakki/batman-over-halow/tree/main)
+3. IQ Dataset for 802.11ah (among other IoT signals): [https://github.com/JaronFontaine/Sub-GHz-IQ-signals-dataset](https://github.com/JaronFontaine/Sub-GHz-IQ-signals-dataset)
+
 ### Media
 
 1. Ben Jeffrey on YouTube gives an overview of IEEE 802.11ah: [https://www.youtube.com/watch?v=qF0BHnmi9j8](https://www.youtube.com/watch?v=qF0BHnmi9j8)
