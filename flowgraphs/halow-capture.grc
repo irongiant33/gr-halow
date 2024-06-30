@@ -66,7 +66,7 @@ blocks:
     center_freq: np.nan
     comment: ''
     description: capture channel 48 between two Alfa HaLow-U nodes, no encryption
-    filename: /home/dragon/Documents/gr-halow/halow-capture2
+    filename: /home/dragon/Documents/gr-halow/captures/halow-capture-name-here
     hw_info: ''
     sample_rate: samp_rate
     type: complex float (fc32_le)
@@ -84,11 +84,11 @@ blocks:
     alias: ''
     begin_tag: pmt.PMT_NIL
     comment: ''
-    file: /home/dragon/Documents/gr-halow/captures/halow-capture.sigmf-data
+    file: /home/dragon/Documents/gr-halow/captures/halow-capture-mcs0.sigmf-data
     length: '0'
     maxoutbuf: '0'
     minoutbuf: '0'
-    repeat: 'True'
+    repeat: 'False'
     type: complex float (fc32_le)
   states:
     bus_sink: false

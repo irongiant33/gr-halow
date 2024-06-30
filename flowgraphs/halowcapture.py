@@ -116,7 +116,7 @@ class halowcapture(gr.top_block, Qt.QWidget):
 
         self.top_layout.addWidget(self._qtgui_waterfall_sink_x_0_win)
         self.blocks_throttle_0 = blocks.throttle(gr.sizeof_gr_complex*1, samp_rate,True)
-        self.blocks_sigmf_source_minimal_0 = blocks.file_source(gr.sizeof_gr_complex, '/home/dragon/Documents/gr-halow/captures/halow-capture.sigmf-data', True, 0, 0)
+        self.blocks_sigmf_source_minimal_0 = blocks.file_source(gr.sizeof_gr_complex, '/home/dragon/Documents/gr-halow/captures/halow-capture-mcs0.sigmf-data', False, 0, 0)
         self.blocks_sigmf_source_minimal_0.set_begin_tag(pmt.PMT_NIL)
 
 
