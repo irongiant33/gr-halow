@@ -45,6 +45,42 @@ blocks:
     coordinate: [288, 28.0]
     rotation: 0
     state: enabled
+- name: filter_cutoff
+  id: variable
+  parameters:
+    comment: ''
+    value: 600e3
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [448, 44.0]
+    rotation: 0
+    state: enabled
+- name: filter_transition
+  id: variable
+  parameters:
+    comment: ''
+    value: 10e3
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [560, 52.0]
+    rotation: 0
+    state: enabled
+- name: offset_freq
+  id: variable
+  parameters:
+    comment: ''
+    value: 2.5e6
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [696, 28.0]
+    rotation: 0
+    state: enabled
 - name: samp_rate
   id: variable
   parameters:
@@ -74,7 +110,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [752, 148.0]
+    coordinate: [952, 276.0]
     rotation: 0
     state: disabled
 - name: blocks_sigmf_source_minimal_0
@@ -94,7 +130,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [432, 540.0]
+    coordinate: [232, 612.0]
     rotation: 0
     state: enabled
 - name: blocks_throttle_0
@@ -113,7 +149,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [800, 540.0]
+    coordinate: [624, 636.0]
     rotation: 0
     state: enabled
 - name: qtgui_waterfall_sink_x_0
@@ -174,7 +210,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1088, 460.0]
+    coordinate: [928, 604.0]
     rotation: 0
     state: enabled
 - name: soapy_source_0
@@ -244,7 +280,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [240, 268.0]
+    coordinate: [272, 324.0]
     rotation: 0
     state: disabled
 
