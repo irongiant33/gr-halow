@@ -60,6 +60,10 @@ Example iperf test for MCS0
 
 **must repeat this process on every device in your network**
 
+## Misc Resources
+
+- Wi-Fi HaLow breakdown and performance results by Troy Martin (MARCH 2024): [https://youtu.be/oFVj1RES9TU?si=XjW0Y5oUUU09URXw](https://youtu.be/oFVj1RES9TU?si=XjW0Y5oUUU09URXw)
+- MCS and Data Rate Table for WiFi Standards [https://mcsindex.net/](https://mcsindex.net/)
 
 ## Todo
 
@@ -74,7 +78,12 @@ Example iperf test for MCS0
 - [x] how many spatial streams does the Halow-U support? **answer** 4, see [mcs picture](media/mcs-nsss.png)
     - according to HaLow-U docs, it only supports 1/2/4 MHz channels, so you don't have to worry about 8 or 16 MHz channels from the IEEE specification. See specification of HaLow-U here: [https://store.rokland.com/products/alfa-network-halow-u-802-11ah-halow-usb-adapter-support-ap-client-mode](https://store.rokland.com/products/alfa-network-halow-u-802-11ah-halow-usb-adapter-support-ap-client-mode)
 - [x] Attempt Wireshark FIFO to see if it detects Wi-Fi frames? **answer**: this won't be possible until there is a program that processes HaLow frames from the PHY. The reason why some people can do this with bluetooth or wifi is that there are decoders (like ice9 bluetooth sniffer) that parse raw RF into layer 2 that Wireshark can read.
+    - [ ] if you have the HaLowU plugged in, does it appear as a Wireshark capture device?
 - [ ] start building modem examples for a basic chatroom style tx/rx so you can lean on these for your halow tx/halow rx
 - [ ] analyze the BPSK capture
 - [ ] how to determine SPS? since the web app told me that I should expect 1 Mbps, can you use this information in tandem with the modulation scheme to determine SPS? For example, 6 Mbps with 16QAM should yield 1.5M baud? If this is true, maybe my timing estimates are off. Even 6 Mbps with 64 QAM would yield 1M baud and I'm seeing half that rate still.
+- [ ] been 6 years since this was contributed to, but does it work? [https://github.com/dverhaert/GNUradio-802.11ah](https://github.com/dverhaert/GNUradio-802.11ah)
+- [ ] any documents from newracom, morse micro that might help?
+- [ ] break out gr-ieee80211 to see if you can get anything to make sense. It might not work end-to-end, but it could serve as a good basis.
+- [ ] build energy detector and correlator that could identify active HaLow channels?
 
