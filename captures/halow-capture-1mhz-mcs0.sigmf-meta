@@ -10,16 +10,14 @@
   "captures": [
     {
       "core:sample_start": 0,
-      "core:datetime": "2024-06-30T09:30:00.000Z",
+      "core:datetime": "2024-07-10T16:51:00.000Z",
       "core:frequency": 918000000.0
     }
   ],
   "annotations": [
     {
       "core:comment": "gnuradioconf is the mesh network name of the HaLow-U network.",
-      "core:comment": "still unknown whether the system is automatically using multiple spatial streams, but I did change the configuration to only use MCS0 on both devices",
-      "core:comment": "latter half of capture I ran a ping from 192.168.1.148 to 192.168.1.149",
-      "core:comment": "t=0.59 to t=0.593 is shown in n_subcarriers_1mhz_2.png"
+      "core:comment": "ran iperf3 between clients connected to each of the HaLow-U's, reported in a *.iperf3 capture of the same name. 551 Kbits/s for sender, 496 Kbits/s for receiver."
     }
   ]
 }

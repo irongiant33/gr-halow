@@ -19,7 +19,7 @@ ip a # ensure HaLow is booted, you should have an IP address. If not booted, ser
 sudo tio -b 115200 /dev/ttyACM0  # or whatever port the halow is connected to
 cd /usr/bin
 cli_app
-show_config
+show config
 ```
 
 ![mcs config](media/mcs-config.png)
@@ -58,7 +58,39 @@ Example iperf test for MCS0
 
 ![iperf](media/iperf.png)
 
+see results of other iperf3 tests in the *.sigmf-meta files, summarized below. Not entirely consistent with the slight drop in MCS 0 rates from 1MHz-2MHz, but everything else seems to make sense.
+
+| bandwidth | mcs | sender rate MBits/sec | receiver rate MBits/sec |
+|-----------|-----|--------|----------|
+| 1 MHz     | 0   |  0.551   |   0.496  |
+| 1 MHz     | ?   |  1.53  |   1.46   |
+| 2 MHz     | 0   |  0.472  |  0.421   |
+| 2 MHz     | ?   |  2.37  |   2.31   |
+| 4 MHz     | 0   |  0.934  |   0.874  |
+| 4 MHz     | ?   | 2.89  |   2.83   |
+
 **must repeat this process on every device in your network**
+
+## visual verification of number of OFDM subcarriers in halow
+
+Table 23-7 of the documentation is summarized below
+
+| Field | 1 MHz | 2 MHz | 4 MHz | Guard Interval Duration |
+|-------|-------|-------|-------|-------------------------|
+| Short Training Field (STF) | 6  | 12 | 24 | The OFDM symbols of the STF field do not have a guard interval |
+| Long Training Field 1 (LTF1) | 26 | 56 | 114 | For bandwidths >= 2 MHz, duration is T_gi2. For 1 MHz bandwidth, duration is T_gi2 for first and second symbols, and T_gi for third and fourth symbols. |
+| S1G | 26 | 52 | 104 | T_gi |
+| S1G-A for long format | N/A | 52 | 104 | T_gi |
+| D-STF for long format | N/A | 12 | 24 | N/A |
+| LTF2~LTF_N_LTF | 26 | 56 | 114 | T_gi |
+| D-LTF for long format | N/A | 56 | 114 | T_gi |
+| S1G-B for long format | N/A | 56 | 114 | T_gi |
+| First Data Symbol | 26 | 56 | 114 | T_gi |
+| From second to the last data symbols | 26 | 56 |114 | T_gi or T_gis |
+| S1G_DUP_1M-Data | N/A | 52 | 104 | T_gi or T_gis |
+| S1G_DUP_2M-Data | N/A | N/A | 112 | T_gi or T_gis |
+
+for the 1 MHz captures, you can see evidence of this in [n_subcarriers_1mhz_1.png](media/n_subcarriers_1mhz_1.png) and [n_subcarriers_1mhz_2.png](media/n_subcarriers_1mhz_2.png). Counting the "strong" peaks you get 26, and the cursors highlight the STF where 6 carriers are evident. 
 
 ## Misc Resources
 
@@ -90,4 +122,7 @@ Example iperf test for MCS0
     - essentially this is a copy of gr-ieee80211, so it is not worth exploring.
 - [ ] any documents from newracom, morse micro that might help?
 - [ ] build energy detector and correlator that could identify active HaLow channels?
-
+- [ ] make a 2MHz capture at various MCS because that is what the old WiFi supported at a minimum. 1 MHz is unique to HaLow. See 23.3.8.3 of specification for 1 MHz format.
+- [ ] does HaLow also use Viterbi encoding/decoding? 
+    - 23.3.9.4.2 "BCC encoder parsing operation": "the BCC encoder parsing operation for S1G PPDUs is the same as those specified in 21.3.10.5.2". Section 23.3.9.4.4 "LDPC coding" covers the modifications to LDPC code and encoding process for S1G single user (SU) PPDU.
+- [ ] how long is the STF/LTF for different bandwidths? 

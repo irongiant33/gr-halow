@@ -10,14 +10,15 @@
   "captures": [
     {
       "core:sample_start": 0,
-      "core:datetime": "2024-06-12T22:20:00.000Z",
+      "core:datetime": "2024-07-10T16:59:00.000Z",
       "core:frequency": 918000000.0
     }
   ],
   "annotations": [
     {
       "core:comment": "gnuradioconf is the mesh network name of the HaLow-U network.",
-      "core:comment": "t=0.446 to t=0.451 is shown in n_subcarriers_1mhz_1.png"
+      "core:comment": "ran iperf3 between clients connected to each of the HaLow-U's, reported in a *.iperf3 capture of the same name. 1.53 Mbits/s for sender, 1.46 Mbits/s for receiver.",
+      "core:comment": "likely MCS7 based on cli_app report, but unknown if MCS changed during iperf3 test"
     }
   ]
 }

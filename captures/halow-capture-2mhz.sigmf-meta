@@ -1,0 +1,25 @@
+{
+  "global": {
+    "core:datatype": "cf32_le",
+    "core:sample_rate": 10000000.0,
+    "core:version": "1.0.0",
+    "core:author": "Sam Miller",
+    "core:description": "capture channel 159, 2 MHz channel centered at 921 MHz between two Alfa HaLow-U nodes, no encryption",
+    "core:recorder": "WarDragon with AirSpy running GNU Radio 3.10.4, halow-capture.grc"
+  },
+  "captures": [
+    {
+      "core:sample_start": 0,
+      "core:datetime": "2024-07-10T16:09:00.000Z",
+      "core:frequency": 918000000.0
+    }
+  ],
+  "annotations": [
+    {
+      "core:comment": "gnuradioconf is the mesh network name of the HaLow-U network.",
+      "core:comment": "ran iperf3 between clients connected to each of the HaLow-U's, reported in a *.iperf3 capture of the same name. 2.37 Mbits/s for sender, 2.31 Mbits/s for receiver.",
+      "core:comment": "likely MCS7 based on cli_app report, but unknown if MCS changed during iperf3 test",
+      "core:comment": "t=03.015 to t=3.016 is shown in n_subcarriers_2mhz_1.png"
+    }
+  ]
+}

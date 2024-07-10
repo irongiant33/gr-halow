@@ -100,9 +100,11 @@ blocks:
     alias: ''
     author: Sam Miller
     center_freq: np.nan
-    comment: ''
+    comment: 'don''t forget to change your filename after running to
+
+      avoid overwriting your captures'
     description: capture channel 48 between two Alfa HaLow-U nodes, no encryption
-    filename: /home/dragon/Documents/gr-halow/captures/halow-capture-name-here
+    filename: /home/dragon/Documents/gr-halow/captures/filenamehere
     hw_info: ''
     sample_rate: samp_rate
     type: complex float (fc32_le)
@@ -120,7 +122,7 @@ blocks:
     alias: ''
     begin_tag: pmt.PMT_NIL
     comment: ''
-    file: /home/dragon/Documents/gr-halow/captures/halow-capture-mcs0.sigmf-data
+    file: /home/dragon/Documents/gr-halow/captures/halow-capture-4mhz.sigmf-data
     length: '0'
     maxoutbuf: '0'
     minoutbuf: '0'
