@@ -33,6 +33,20 @@ options:
     state: enabled
 
 blocks:
+- name: additional_window_size
+  id: variable
+  parameters:
+    comment: 'original=16
+
+      my logic was to scale this in proportion to the window size'
+    value: '8'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [120, 148.0]
+    rotation: 0
+    state: enabled
 - name: chan_est
   id: variable_qtgui_chooser
   parameters:
@@ -282,8 +296,8 @@ blocks:
 - name: window_size
   id: variable
   parameters:
-    comment: ''
-    value: '48'
+    comment: original=48
+    value: '24'
   states:
     bus_sink: false
     bus_source: false
@@ -304,7 +318,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1016, 312]
+    coordinate: [1448, 320.0]
     rotation: 0
     state: enabled
 - name: blocks_complex_to_mag_squared_0
@@ -320,7 +334,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [720, 192.0]
+    coordinate: [1128, 168.0]
     rotation: 0
     state: enabled
 - name: blocks_conjugate_cc_0
@@ -335,7 +349,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [480, 392.0]
+    coordinate: [888, 336.0]
     rotation: 0
     state: enabled
 - name: blocks_delay_0
@@ -354,7 +368,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [536, 540.0]
+    coordinate: [848, 672.0]
     rotation: 0
     state: enabled
 - name: blocks_delay_0_0
@@ -363,7 +377,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    delay: '16'
+    delay: additional_window_size
     maxoutbuf: '0'
     minoutbuf: '0'
     num_ports: '1'
@@ -373,7 +387,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [400, 296.0]
+    coordinate: [736, 320.0]
     rotation: 0
     state: enabled
 - name: blocks_divide_xx_0
@@ -391,7 +405,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1168, 400]
+    coordinate: [1672.0, 344]
     rotation: 270
     state: enabled
 - name: blocks_file_sink_0
@@ -409,7 +423,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [768, 908]
+    coordinate: [288, 788.0]
     rotation: 180
     state: enabled
 - name: blocks_moving_average_xx_0
@@ -418,7 +432,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    length: window_size  + 16
+    length: window_size  + additional_window_size
     max_iter: '4000'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -429,7 +443,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [944, 180.0]
+    coordinate: [1408, 164.0]
     rotation: 0
     state: enabled
 - name: blocks_moving_average_xx_1
@@ -449,7 +463,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [808, 284.0]
+    coordinate: [1200, 284.0]
     rotation: 0
     state: enabled
 - name: blocks_multiply_xx_0
@@ -467,7 +481,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [664, 296]
+    coordinate: [1040, 312.0]
     rotation: 0
     state: enabled
 - name: blocks_sigmf_source_minimal_0
@@ -487,8 +501,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [24, 516.0]
-    rotation: 0
+    coordinate: [72, 516.0]
+    rotation: 180
     state: true
 - name: blocks_stream_to_vector_0
   id: blocks_stream_to_vector
@@ -505,7 +519,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [944, 528.0]
+    coordinate: [1336, 568.0]
     rotation: 0
     state: enabled
 - name: blocks_throttle_0
@@ -524,7 +538,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [216, 148.0]
+    coordinate: [80, 468.0]
     rotation: 0
     state: true
 - name: fft_vxx_0
@@ -545,8 +559,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [168, 672]
-    rotation: 0
+    coordinate: [1368, 692.0]
+    rotation: 180
     state: enabled
 - name: foo_wireshark_connector_0
   id: foo_wireshark_connector
@@ -562,7 +576,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [952, 916]
+    coordinate: [536, 796.0]
     rotation: 180
     state: enabled
 - name: freq_xlating_fir_filter_xxx_0
@@ -582,7 +596,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [440, 148.0]
+    coordinate: [304, 148.0]
     rotation: 0
     state: true
 - name: ieee802_11_decode_mac_0
@@ -591,7 +605,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    debug: 'True'
+    debug: 'False'
     log: 'False'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -599,8 +613,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [864, 676]
-    rotation: 0
+    coordinate: [816, 740.0]
+    rotation: 180
     state: enabled
 - name: ieee802_11_frame_equalizer_0
   id: ieee802_11_frame_equalizer
@@ -619,8 +633,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [432, 672]
-    rotation: 0
+    coordinate: [1080, 692.0]
+    rotation: 180
     state: enabled
 - name: ieee802_11_parse_mac_0
   id: ieee802_11_parse_mac
@@ -636,7 +650,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [872, 796.0]
+    coordinate: [576, 716.0]
     rotation: 180
     state: enabled
 - name: ieee802_11_sync_long_0
@@ -654,7 +668,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [744, 508.0]
+    coordinate: [1128, 596.0]
     rotation: 0
     state: enabled
 - name: ieee802_11_sync_short_0
@@ -673,9 +687,24 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [304, 488.0]
-    rotation: 0
+    coordinate: [648.0, 520]
+    rotation: 270
     state: enabled
+- name: note_0
+  id: note
+  parameters:
+    alias: ''
+    comment: 'pretty certain all blocks above this one are essentially
+
+      performing an autocorrelation?'
+    note: ''
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1136, 380.0]
+    rotation: 0
+    state: true
 - name: pdu_pdu_to_tagged_stream_0
   id: pdu_pdu_to_tagged_stream
   parameters:
@@ -690,7 +719,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [576, 836.0]
+    coordinate: [776, 868.0]
     rotation: 180
     state: true
 - name: qtgui_const_sink_x_0
@@ -782,7 +811,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [344, 828]
+    coordinate: [488, 876.0]
     rotation: 180
     state: enabled
 - name: qtgui_time_sink_x_0
@@ -879,7 +908,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1272, 532.0]
+    coordinate: [1848, 356.0]
     rotation: 0
     state: enabled
 - name: soapy_hackrf_source_0
@@ -1338,7 +1367,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [32, 216]
+    coordinate: [32, 244.0]
     rotation: 0
     state: disabled
 

@@ -83,7 +83,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
         # Variables
         ##################################################
         self.samp_rate = samp_rate = 1e6
-        self.window_size = window_size = 48
+        self.window_size = window_size = 24
         self.sync_length = sync_length = 320
         self.sdr_center_freq = sdr_center_freq = 918000000
         self.lo_offset = lo_offset = 0
@@ -93,6 +93,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self.filter_transition = filter_transition = 10e3
         self.filter_cutoff = filter_cutoff = (samp_rate / 2) + (samp_rate /10)
         self.chan_est = chan_est = 0
+        self.additional_window_size = additional_window_size = 8
 
         ##################################################
         # Blocks
@@ -265,10 +266,10 @@ class halow_rx(gr.top_block, Qt.QWidget):
         # Create the radio buttons
         self.top_layout.addWidget(self._lo_offset_tool_bar)
         self.ieee802_11_sync_short_0 = ieee802_11.sync_short(0.56, 2, False, False)
-        self.ieee802_11_sync_long_0 = ieee802_11.sync_long(sync_length, False, False)
+        self.ieee802_11_sync_long_0 = ieee802_11.sync_long(sync_length, False, True)
         self.ieee802_11_parse_mac_0 = ieee802_11.parse_mac(False, False)
         self.ieee802_11_frame_equalizer_0 = ieee802_11.frame_equalizer(ieee802_11.Equalizer(chan_est), freq, samp_rate, False, False)
-        self.ieee802_11_decode_mac_0 = ieee802_11.decode_mac(False, True)
+        self.ieee802_11_decode_mac_0 = ieee802_11.decode_mac(False, False)
         self._gain_range = Range(0, 1, 0.01, 0.75, 200)
         self._gain_win = GrRangeWidget(self._gain_range, self.set_gain, "'gain'", "counter_slider", float, QtCore.Qt.Horizontal, "value")
 
@@ -282,11 +283,11 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self.blocks_sigmf_source_minimal_0.set_begin_tag(pmt.PMT_NIL)
         self.blocks_multiply_xx_0 = blocks.multiply_vcc(1)
         self.blocks_moving_average_xx_1 = blocks.moving_average_cc(window_size, 1, 4000, 1)
-        self.blocks_moving_average_xx_0 = blocks.moving_average_ff((window_size  + 16), 1, 4000, 1)
+        self.blocks_moving_average_xx_0 = blocks.moving_average_ff((window_size  + additional_window_size), 1, 4000, 1)
         self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_char*1, '/tmp/wifi.pcap', False)
         self.blocks_file_sink_0.set_unbuffered(True)
         self.blocks_divide_xx_0 = blocks.divide_ff(1)
-        self.blocks_delay_0_0 = blocks.delay(gr.sizeof_gr_complex*1, 16)
+        self.blocks_delay_0_0 = blocks.delay(gr.sizeof_gr_complex*1, additional_window_size)
         self.blocks_delay_0 = blocks.delay(gr.sizeof_gr_complex*1, sync_length)
         self.blocks_conjugate_cc_0 = blocks.conjugate_cc()
         self.blocks_complex_to_mag_squared_0 = blocks.complex_to_mag_squared(1)
@@ -349,7 +350,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
 
     def set_window_size(self, window_size):
         self.window_size = window_size
-        self.blocks_moving_average_xx_0.set_length_and_scale((self.window_size  + 16), 1)
+        self.blocks_moving_average_xx_0.set_length_and_scale((self.window_size  + self.additional_window_size), 1)
         self.blocks_moving_average_xx_1.set_length_and_scale(self.window_size, 1)
 
     def get_sync_length(self):
@@ -417,6 +418,14 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self.chan_est = chan_est
         self._chan_est_callback(self.chan_est)
         self.ieee802_11_frame_equalizer_0.set_algorithm(ieee802_11.Equalizer(self.chan_est))
+
+    def get_additional_window_size(self):
+        return self.additional_window_size
+
+    def set_additional_window_size(self, additional_window_size):
+        self.additional_window_size = additional_window_size
+        self.blocks_delay_0_0.set_dly(self.additional_window_size)
+        self.blocks_moving_average_xx_0.set_length_and_scale((self.window_size  + self.additional_window_size), 1)
 
 
 

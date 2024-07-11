@@ -73,6 +73,10 @@ see results of other iperf3 tests in the *.sigmf-meta files, summarized below. N
 
 ## visual verification of number of OFDM subcarriers in halow
 
+_technically_ "for a 1 MHz S1G PPDU transmission, the 1 MHz is divided into 32 subcarriers. The signal is transmitted on subcarriers -13 to -1 and 1 to 13 with 0 being the center (DC) subcarrier" (specification, p.3215, section 23.3.7). Together with the subcarrier spacing of 31.25 kHz, this gives the whole 1 MHz so we know exactly which frequency each subcarrier is on. 
+- Pilots (`subcarrier_idx = [-7, 7]`) means that
+- Generally, the equation for subcarrier frequency offset from center is `subcarrier_freq = subcarrier_spacing_khz/2 + subcarrier_idx * subcarrier_spacing`
+
 Table 23-7 of the documentation is summarized below
 
 | Field | 1 MHz | 2 MHz | 4 MHz | Guard Interval Duration |
@@ -91,6 +95,14 @@ Table 23-7 of the documentation is summarized below
 | S1G_DUP_2M-Data | N/A | N/A | 112 | T_gi or T_gis |
 
 for the 1 MHz captures, you can see evidence of this in [n_subcarriers_1mhz_1.png](media/n_subcarriers_1mhz_1.png) and [n_subcarriers_1mhz_2.png](media/n_subcarriers_1mhz_2.png). Counting the "strong" peaks you get 26, and the cursors highlight the STF where 6 carriers are evident. 
+
+![subcarriers](media/timing-constants.png)
+
+Given the timing constraints and the packet construction below, we can try and compare some of the length in Inspectrum between actual/expected. Note this is specifically for the 1M packets.
+
+![1M_packet](media/s1g_1m_ppdu-format.png)
+
+It takes 560us to get to the LTF2-LTFN field. This roughly lines up with the dense red subcarrier spike width in 1MHz inspectrum captures.
 
 ## Misc Resources
 
@@ -126,3 +138,9 @@ for the 1 MHz captures, you can see evidence of this in [n_subcarriers_1mhz_1.pn
 - [ ] does HaLow also use Viterbi encoding/decoding? 
     - 23.3.9.4.2 "BCC encoder parsing operation": "the BCC encoder parsing operation for S1G PPDUs is the same as those specified in 21.3.10.5.2". Section 23.3.9.4.4 "LDPC coding" covers the modifications to LDPC code and encoding process for S1G single user (SU) PPDU.
 - [ ] how long is the STF/LTF for different bandwidths? 
+- [ ] read into the WiFi Sync Short and WiFi Sync Long blocks from gr-ieee80211 because it does match with the order of the STF and LTF1 in the PPDU. If you get those right, you may be able to decode the SIG field, but there is another LTF2 after SIG which does not track with the gr-ieee80211 flowgraph. Decoding the SIG field would be a good step in the right direction though
+    - this will also help you answer the question "why delay by 16 samples?", "is there significance to a 48 'window size' moving average?", and "how does a 320 'sync length' impact the WiFi long sync?", "what is the significance of the FFT size 64?"
+    - "is there a significance to a 48 'window size' moving average?" if 48 is the number of coded bits per subcarrier in standard WiFi, then according to Table 23-41 above, the number of coded bits per subcarrier (N_CBPS) is 24 for 1 MHz MCS=0.
+    - "what is the significance of the FFT size 64?" might have something to do with the fact there is a filter kernel with 64 complex samples in the WiFi Sync Long source code that is correlated with the input: https://github.com/bastibl/gr-ieee802-11/blob/ce7097384bb29f9e73777cf1458a072a90430528/lib/sync_long.cc#L257
+- [ ] the 1MHz interleaver is different, as shown in [1mhz interleaver](media/1mhz_interleaver.png). How do you implement the new one?
+- [ ] test your theory of the autocorrelation hidden in plain sight with the wifi_rx.grc flowgraph. Use a canned example to make it easier.
