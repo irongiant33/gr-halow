@@ -210,8 +210,13 @@ ofdm is like threading in RF. fdm is multiprocessing. It lowers the rate of each
 - [ ] what is the 80 constant used in `frame_equalizer_impl.cc` used to compenstate for frequency/phase offset?
 - [ ] where does `frame_equalizer_impl.cc` get the polarity numbers? in general, how do you determine whether to multiply the pilots by 1 or -1 when doing the frequency correction in the frame equalizer? 
     - maybe you could guess since there aren't that many combos?
+    - is it from [table I-21](media/polarity.png) on p.4170?
+    - combo of the table above and from section 17.3.5.10 on p.2826, it might be the same, just taking from the first 32 indices instead of using the full 127 described. p.3247, the S1G_1M spec, cites that it takes from 17.3.5.10 and only defined n from 0 to 5
+    - or does it also incorporate [table 21-21](media/pilotvalues.png) from p.3087 in combination with the equation on p.3253 (S1G pilots) for n=0 to n=5?
+    - maybe the n=0 to n=5 from equation 23-42 on p.3247 is only for the 6 OFDM symbols of the SIG field? The rest of the polarities in 17.3.5.10 on p.2826 are for successive symbols, and if the number of symbols are greater than 127, then it just wraps around?
 - [x] what is the halow interleaver pattern for `frame_equalizer_impl.cc`? You just inferred based off of the old one 
     - I think I'm correct based off of [table 23-41](media/mcs-nsss_1mhz.png) and [table 23-20](media/1mhz_interleaver.png) assuming that N_bpscs is 1.
 - [ ] can you use sigdigger inspector to ID PSK/FSK/ASK as well as multi-level? now that you suspect halow is OFDM, can you actually verify 4QAM and BPSK for the different MCS?
 - [ ] p.3247 says that the SIG field is repeated 2x, so you need to incorporate that into your `frame_equalizer_impl.cc` code. I think you don't need to compare the repeated bits, but instead ensure that at least one of the repeated sets has a passing CRC. For now, you could probably just print both out. I'm pretty sure it goes SIG-1a, SIG-1b, SIG-2a, SIG-2b rather than repeating every bit individually.
     - right now you're only accounting for the first repetition
+- [ ] p.4170 has some interesting time domain representation tables. Is this where the fixed 64 size complex FIR filter kernel comes from in the `sync_long_impl.cc`?
