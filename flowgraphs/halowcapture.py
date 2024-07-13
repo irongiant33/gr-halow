@@ -75,6 +75,9 @@ class halowcapture(gr.top_block, Qt.QWidget):
         # Variables
         ##################################################
         self.samp_rate = samp_rate = int(10e6)
+        self.offset_freq = offset_freq = 2.5e6
+        self.filter_transition = filter_transition = 10e3
+        self.filter_cutoff = filter_cutoff = 600e3
         self.center_freq = center_freq = int(918e6)
 
         ##################################################
@@ -116,7 +119,7 @@ class halowcapture(gr.top_block, Qt.QWidget):
 
         self.top_layout.addWidget(self._qtgui_waterfall_sink_x_0_win)
         self.blocks_throttle_0 = blocks.throttle(gr.sizeof_gr_complex*1, samp_rate,True)
-        self.blocks_sigmf_source_minimal_0 = blocks.file_source(gr.sizeof_gr_complex, '/home/dragon/Documents/gr-halow/captures/halow-capture-mcs0.sigmf-data', False, 0, 0)
+        self.blocks_sigmf_source_minimal_0 = blocks.file_source(gr.sizeof_gr_complex, '/home/dragon/Documents/gr-halow/captures/halow-capture-4mhz.sigmf-data', False, 0, 0)
         self.blocks_sigmf_source_minimal_0.set_begin_tag(pmt.PMT_NIL)
 
 
@@ -142,6 +145,24 @@ class halowcapture(gr.top_block, Qt.QWidget):
         self.samp_rate = samp_rate
         self.blocks_throttle_0.set_sample_rate(self.samp_rate)
         self.qtgui_waterfall_sink_x_0.set_frequency_range(self.center_freq, self.samp_rate)
+
+    def get_offset_freq(self):
+        return self.offset_freq
+
+    def set_offset_freq(self, offset_freq):
+        self.offset_freq = offset_freq
+
+    def get_filter_transition(self):
+        return self.filter_transition
+
+    def set_filter_transition(self, filter_transition):
+        self.filter_transition = filter_transition
+
+    def get_filter_cutoff(self):
+        return self.filter_cutoff
+
+    def set_filter_cutoff(self, filter_cutoff):
+        self.filter_cutoff = filter_cutoff
 
     def get_center_freq(self):
         return self.center_freq

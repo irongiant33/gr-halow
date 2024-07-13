@@ -18,6 +18,8 @@ You can view the IEEE Medium Access Control (MAC) and Physical Layer (PHY) speci
 
 🚧 Under Construction 🚧
 
+_This may become a pull request into [gr-ieee802-11](https://github.com/bastibl/gr-ieee802-11). See pull request contents here: [https://github.com/irongiant33/gr-ieee802-11](https://github.com/irongiant33/gr-ieee802-11)_
+
 `gr-halow` is a GNU Radio Out-of-Tree Module. Read more about GNU Radio and their out-of-tree module concept here: [https://wiki.gnuradio.org/index.php?title=Creating_Python_OOT_with_gr-modtool](https://wiki.gnuradio.org/index.php?title=Creating_Python_OOT_with_gr-modtool). To install, you should have GNU Radio Version 3.10 or above
 
 ```
