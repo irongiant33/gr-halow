@@ -1,2 +1,5 @@
 **.sigmf-data
 **.iperf3
+**.pyc
+*.pyo
+build*/
