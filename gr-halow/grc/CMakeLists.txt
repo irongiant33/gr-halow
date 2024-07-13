@@ -5,9 +5,9 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-
 install(FILES
     halow_halow_sync_short.block.yml
     halow_halow_sync_long.block.yml
-    halow_halow_frame_equalizer.block.yml DESTINATION share/gnuradio/grc/blocks
+    halow_halow_frame_equalizer.block.yml
+    DESTINATION share/gnuradio/grc/blocks
 )

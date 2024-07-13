@@ -15,5 +15,6 @@ install(FILES
     halow_frame_equalizer.h
     halow_sync_long.h
     halow_sync_short.h
-    mapper.h DESTINATION include/gnuradio/halow
+    mapper.h
+    DESTINATION include/gnuradio/halow
 )

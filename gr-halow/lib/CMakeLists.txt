@@ -16,7 +16,6 @@ if(SSE2_SUPPORTED)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
     add_definitions(-DHALOW_MSSE2)
 endif(SSE2_SUPPORTED)
-
 list(APPEND halow_sources
     equalizer/base.cc
     equalizer/comb.cc
@@ -30,7 +29,7 @@ list(APPEND halow_sources
     halow_sync_short_impl.cc
     mapper_impl.cc
     utils.cc
-)
+    )
 
 # use SSE2 optimized viterbi implementation if SSE2 is enabled
 if(SSE2_SUPPORTED)

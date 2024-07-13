@@ -27,11 +27,11 @@ include(GrPybind)
 ########################################################################
 # Python Bindings
 ########################################################################
-
 list(APPEND halow_python_files
     halow_sync_short_python.cc
     halow_sync_long_python.cc
-    halow_frame_equalizer_python.cc python_bindings.cc)
+    halow_frame_equalizer_python.cc
+    python_bindings.cc)
 
 GR_PYBIND_MAKE_OOT(halow
    ../../..

@@ -24,14 +24,157 @@
 #include <list>
 #include <tuple>
 
-using namespace gr::halow;
 using namespace std;
 
+namespace gr {
+namespace halow {
 
 bool compare_abs(const std::pair<gr_complex, int>& first,
                  const std::pair<gr_complex, int>& second)
 {
     return abs(get<0>(first)) > abs(get<0>(second));
+}
+
+using input_type = gr_complex;
+using output_type = gr_complex;
+halow_sync_long::sptr halow_sync_long::make(unsigned int sync_length, bool log, bool debug)
+{
+    return gnuradio::make_block_sptr<halow_sync_long_impl>(sync_length, log, debug);
+}
+
+/*
+ * The private constructor
+ */
+halow_sync_long_impl::halow_sync_long_impl(unsigned int sync_length, bool log, bool debug)
+    : gr::sync_block("halow_sync_long",
+                     gr::io_signature::make(
+                         2 /* min inputs */, 2 /* max inputs */, sizeof(input_type)),
+                     gr::io_signature::make(
+                         1 /* min outputs */, 1 /*max outputs */, sizeof(output_type)))
+{
+    _sync_length = sync_length;
+    _log = log;
+    _debug = debug;
+    d_fir(gr::filter::kernel::fir_filter_ccc(LONG)),
+    d_log(log),
+    d_debug(debug),
+    d_offset(0),
+    d_state(SYNC),
+    SYNC_LENGTH(sync_length)
+}
+
+/*
+ * Our virtual destructor.
+ */
+halow_sync_long_impl::~halow_sync_long_impl() {}
+
+int halow_sync_long_impl::work(int noutput_items,
+                               gr_vector_const_void_star& input_items,
+                               gr_vector_void_star& output_items)
+{
+    auto in = static_cast<const input_type*>(input_items[0]);
+    auto in_delayed = static_cast<const input_type*>(input_items[1]);
+    auto out = static_cast<output_type*>(output_items[0]);
+
+    dout << "LONG ninput[0] " << ninput_items[0] << "   ninput[1] " << ninput_items[1]
+            << "  noutput " << noutput << "   state " << d_state << std::endl;
+
+    int ninput = std::min(std::min(ninput_items[0], ninput_items[1]), 8192);
+
+    const uint64_t nread = nitems_read(0);
+    get_tags_in_range(d_tags, 0, nread, nread + ninput);
+    if (d_tags.size()) {
+        std::sort(d_tags.begin(), d_tags.end(), gr::tag_t::offset_compare);
+
+        const uint64_t offset = d_tags.front().offset;
+
+        if (offset > nread) {
+            ninput = offset - nread;
+        } else {
+            if (d_offset && (d_state == SYNC)) {
+                throw std::runtime_error("wtf");
+            }
+            if (d_state == COPY) {
+                d_state = RESET;
+            }
+            d_freq_offset_short = pmt::to_double(d_tags.front().value);
+        }
+    }
+
+
+    int i = 0;
+    int o = 0;
+
+    switch (d_state) {
+
+    case SYNC:
+        d_fir.filterN(
+            d_correlation, in, std::min(SYNC_LENGTH, std::max(ninput - 63, 0)));
+
+        while (i + 63 < ninput) {
+
+            d_cor.push_back(pair<gr_complex, int>(d_correlation[i], d_offset));
+
+            i++;
+            d_offset++;
+
+            if (d_offset == SYNC_LENGTH) {
+                search_frame_start();
+                mylog("LONG: frame start at {}",d_frame_start);
+                d_offset = 0;
+                d_count = 0;
+                d_state = COPY;
+
+                break;
+            }
+        }
+        break;
+    case COPY:
+        while (i < ninput && o < noutput) {
+
+            int rel = d_offset - d_frame_start;
+
+            if (!rel) {
+                add_item_tag(0,
+                                nitems_written(0),
+                                pmt::string_to_symbol("wifi_start"),
+                                pmt::from_double(d_freq_offset_short - d_freq_offset),
+                                pmt::string_to_symbol(name()));
+            }
+
+            if (rel >= 0 && (rel < 128 || ((rel - 128) % 80) > 15)) {
+                out[o] = in_delayed[i] * exp(gr_complex(0, d_offset * d_freq_offset));
+                o++;
+            }
+
+            i++;
+            d_offset++;
+        }
+
+        break;
+
+    case RESET: {
+        while (o < noutput) {
+            if (((d_count + o) % 64) == 0) {
+                d_offset = 0;
+                d_state = SYNC;
+                break;
+            } else {
+                out[o] = 0;
+                o++;
+            }
+        }
+
+        break;
+    }
+    }
+
+    dout << "produced : " << o << " consumed: " << i << std::endl;
+
+    d_count += o;
+    consume(0, i);
+    consume(1, i);
+    return o;
 }
 
 class halow_sync_long_impl : public halow_sync_long
@@ -288,3 +431,6 @@ const std::vector<gr_complex> halow_sync_long_impl::LONG = {
     gr_complex(0.8594, -0.7348),  gr_complex(0.3528, 0.9865),
     gr_complex(-0.0455, 1.0679),  gr_complex(1.3868, -0.0000),
 };
+
+} /*namespace halow*/
+} /*namespace gr*/
