@@ -171,9 +171,7 @@ blocks:
     label: ''
     min_len: '200'
     orient: QtCore.Qt.Horizontal
-    outputmsgname: value
     rangeType: float
-    showports: 'False'
     start: '0'
     step: '0.01'
     stop: '1'
@@ -266,9 +264,7 @@ blocks:
     label: ''
     min_len: '200'
     orient: QtCore.Qt.Horizontal
-    outputmsgname: value
     rangeType: float
-    showports: 'False'
     start: '902000000'
     step: '100000'
     stop: '928000000'
@@ -362,6 +358,7 @@ blocks:
     maxoutbuf: '0'
     minoutbuf: '0'
     num_ports: '1'
+    showports: 'False'
     type: complex
     vlen: '1'
   states:
@@ -381,6 +378,7 @@ blocks:
     maxoutbuf: '0'
     minoutbuf: '0'
     num_ports: '1'
+    showports: 'False'
     type: complex
     vlen: '1'
   states:
@@ -491,7 +489,7 @@ blocks:
     alias: ''
     begin_tag: pmt.PMT_NIL
     comment: ''
-    file: /home/dragon/Documents/gr-halow/captures/halow-capture-1mhz-mcs0.sigmf-data
+    file: /home/irongiant/Documents/gr-halow/captures/halow-capture-1mhz-mcs0.sigmf-data
     length: '0'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -1375,7 +1373,7 @@ connections:
 - [blocks_complex_to_mag_0, '0', blocks_divide_xx_0, '0']
 - [blocks_complex_to_mag_squared_0, '0', blocks_moving_average_xx_0, '0']
 - [blocks_conjugate_cc_0, '0', blocks_multiply_xx_0, '1']
-- [blocks_delay_0, '0', ieee802_11_sync_long_0, '1']
+- [blocks_delay_0, '0', ieee802_11_sync_long_0, '0']
 - [blocks_delay_0_0, '0', blocks_conjugate_cc_0, '0']
 - [blocks_delay_0_0, '0', ieee802_11_sync_short_0, '0']
 - [blocks_divide_xx_0, '0', ieee802_11_sync_short_0, '2']
@@ -1398,7 +1396,7 @@ connections:
 - [ieee802_11_frame_equalizer_0, symbols, pdu_pdu_to_tagged_stream_0, pdus]
 - [ieee802_11_sync_long_0, '0', blocks_stream_to_vector_0, '0']
 - [ieee802_11_sync_short_0, '0', blocks_delay_0, '0']
-- [ieee802_11_sync_short_0, '0', ieee802_11_sync_long_0, '0']
+- [ieee802_11_sync_short_0, '0', ieee802_11_sync_long_0, '1']
 - [pdu_pdu_to_tagged_stream_0, '0', qtgui_const_sink_x_0, '0']
 - [soapy_hackrf_source_0, '0', blocks_complex_to_mag_squared_0, '0']
 - [soapy_hackrf_source_0, '0', blocks_delay_0_0, '0']
@@ -1409,4 +1407,4 @@ connections:
 
 metadata:
   file_format: 1
-  grc_version: 3.10.4.0
+  grc_version: 3.10.7.0

@@ -6,45 +6,33 @@
 #
 # GNU Radio Python Flow Graph
 # Title: Halow Rx
-# GNU Radio version: 3.10.4.0
+# GNU Radio version: 3.10.7.0
 
 from packaging.version import Version as StrictVersion
-
-if __name__ == '__main__':
-    import ctypes
-    import sys
-    if sys.platform.startswith('linux'):
-        try:
-            x11 = ctypes.cdll.LoadLibrary('libX11.so')
-            x11.XInitThreads()
-        except:
-            print("Warning: failed to XInitThreads()")
-
 from PyQt5 import Qt
-from PyQt5.QtCore import QObject, pyqtSlot
 from gnuradio import qtgui
-from gnuradio.filter import firdes
-import sip
+from PyQt5.QtCore import QObject, pyqtSlot
 from gnuradio import blocks
 import pmt
 from gnuradio import fft
 from gnuradio.fft import window
 from gnuradio import filter
+from gnuradio.filter import firdes
 from gnuradio import gr
 import sys
 import signal
+from PyQt5 import Qt
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio import gr, pdu
-from gnuradio.qtgui import Range, GrRangeWidget
+from gnuradio.qtgui import Range, RangeWidget
 from PyQt5 import QtCore
 import foo
 import ieee802_11
+import sip
 
 
-
-from gnuradio import qtgui
 
 class halow_rx(gr.top_block, Qt.QWidget):
 
@@ -55,8 +43,8 @@ class halow_rx(gr.top_block, Qt.QWidget):
         qtgui.util.check_set_qss()
         try:
             self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
-        except:
-            pass
+        except BaseException as exc:
+            print(f"Qt GUI: Could not set Icon: {str(exc)}", file=sys.stderr)
         self.top_scroll_layout = Qt.QVBoxLayout()
         self.setLayout(self.top_scroll_layout)
         self.top_scroll = Qt.QScrollArea()
@@ -76,8 +64,8 @@ class halow_rx(gr.top_block, Qt.QWidget):
                 self.restoreGeometry(self.settings.value("geometry").toByteArray())
             else:
                 self.restoreGeometry(self.settings.value("geometry"))
-        except:
-            pass
+        except BaseException as exc:
+            print(f"Qt GUI: Could not restore geometry: {str(exc)}", file=sys.stderr)
 
         ##################################################
         # Variables
@@ -98,9 +86,9 @@ class halow_rx(gr.top_block, Qt.QWidget):
         ##################################################
         # Blocks
         ##################################################
-        self._sdr_center_freq_range = Range(902000000, 928000000, 100000, 918000000, 200)
-        self._sdr_center_freq_win = GrRangeWidget(self._sdr_center_freq_range, self.set_sdr_center_freq, "'sdr_center_freq'", "counter_slider", float, QtCore.Qt.Horizontal, "value")
 
+        self._sdr_center_freq_range = Range(902000000, 928000000, 100000, 918000000, 200)
+        self._sdr_center_freq_win = RangeWidget(self._sdr_center_freq_range, self.set_sdr_center_freq, "'sdr_center_freq'", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._sdr_center_freq_win)
         # Create the options list
         self._samp_rate_options = [1000000.0, 2000000.0, 4000000.0, 5000000.0, 10000000.0, 20000000.0]
@@ -266,20 +254,19 @@ class halow_rx(gr.top_block, Qt.QWidget):
         # Create the radio buttons
         self.top_layout.addWidget(self._lo_offset_tool_bar)
         self.ieee802_11_sync_short_0 = ieee802_11.sync_short(0.56, 2, False, False)
-        self.ieee802_11_sync_long_0 = ieee802_11.sync_long(sync_length, False, True)
+        self.ieee802_11_sync_long_0 = ieee802_11.sync_long(sync_length, False, False)
         self.ieee802_11_parse_mac_0 = ieee802_11.parse_mac(False, False)
         self.ieee802_11_frame_equalizer_0 = ieee802_11.frame_equalizer(ieee802_11.Equalizer(chan_est), freq, samp_rate, False, False)
         self.ieee802_11_decode_mac_0 = ieee802_11.decode_mac(False, False)
         self._gain_range = Range(0, 1, 0.01, 0.75, 200)
-        self._gain_win = GrRangeWidget(self._gain_range, self.set_gain, "'gain'", "counter_slider", float, QtCore.Qt.Horizontal, "value")
-
+        self._gain_win = RangeWidget(self._gain_range, self.set_gain, "'gain'", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._gain_win)
         self.freq_xlating_fir_filter_xxx_0 = filter.freq_xlating_fir_filter_ccc((int(input_samp_rate/samp_rate)), firdes.low_pass(1, input_samp_rate, filter_cutoff, filter_transition), (freq - sdr_center_freq), input_samp_rate)
         self.foo_wireshark_connector_0 = foo.wireshark_connector(127, False)
         self.fft_vxx_0 = fft.fft_vcc(64, True, window.rectangular(64), True, 1)
         self.blocks_throttle_0 = blocks.throttle(gr.sizeof_gr_complex*1, input_samp_rate,True)
         self.blocks_stream_to_vector_0 = blocks.stream_to_vector(gr.sizeof_gr_complex*1, 64)
-        self.blocks_sigmf_source_minimal_0 = blocks.file_source(gr.sizeof_gr_complex, '/home/dragon/Documents/gr-halow/captures/halow-capture-1mhz-mcs0.sigmf-data', False, 0, 0)
+        self.blocks_sigmf_source_minimal_0 = blocks.file_source(gr.sizeof_gr_complex, '/home/irongiant/Documents/gr-halow/captures/halow-capture-1mhz-mcs0.sigmf-data', False, 0, 0)
         self.blocks_sigmf_source_minimal_0.set_begin_tag(pmt.PMT_NIL)
         self.blocks_multiply_xx_0 = blocks.multiply_vcc(1)
         self.blocks_moving_average_xx_1 = blocks.moving_average_cc(window_size, 1, 4000, 1)
@@ -358,7 +345,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
 
     def set_sync_length(self, sync_length):
         self.sync_length = sync_length
-        self.blocks_delay_0.set_dly(self.sync_length)
+        self.blocks_delay_0.set_dly(int(self.sync_length))
 
     def get_sdr_center_freq(self):
         return self.sdr_center_freq
@@ -424,7 +411,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
 
     def set_additional_window_size(self, additional_window_size):
         self.additional_window_size = additional_window_size
-        self.blocks_delay_0_0.set_dly(self.additional_window_size)
+        self.blocks_delay_0_0.set_dly(int(self.additional_window_size))
         self.blocks_moving_average_xx_0.set_length_and_scale((self.window_size  + self.additional_window_size), 1)
 
 
