@@ -1,16 +1,30 @@
+- [general setup description](#general-setup-description)
+- [view and modify MCS on HaLow-U](#view-and-modify-mcs-on-halow)
+- [testing link speed](#testing-link-speed)
+- [visual verification of subcarriers](#visual-verification-of-number-of-ofdm-subcarriers-in-halow)
+- [ieee standards breakdown](#ieee-standards-breakdown)
+- [misc resources](#misc-resources)
+- [todo](#todo)
+
+## general setup description
+
+Going to work on a 1MHz channel with no encryption on MCS-0 even though 2MHz and 4MHz channels are available on HaLow-U. When I get this combination working, I will progress up MCS and then progress up channel width. 
+
+Below is a picture of the network configuration as seen in the admin page on each HaLow-U
+
 ![network config](media/network-config.png)
 
-Testing between two devices, no encryption on Channel 48. Channel 48 is a 1 MHz channel centered at 920.5 MHz. Even with no information moving over the network, it is fairly chatty:
+To set the MCS to 0 and avoid rate control changing the MCS, refer to the section [view and modify MCS on HaLow](#view-and-modify-mcs-on-halow)
+
+Below is a picture of the general spectrum waterfall. Unlike gr-ieee802_11, which is based on 802.11a/g, 802.11ah is rooted in 802.11a. All this to say the number of subcarriers are different and we won't be able to blindly apply gr-ieee802_11 to decode 802.11ah, but much of the underlying functionality should be the same. See [ieee standards breakdown](#ieee-standards-breakdown) for more details on the comparison.
+
+Below is a picture of the spectrum waterfall. For visual verification of the subcarriers, refer to [visual verification of subcarriers](#visual-verification-of-number-of-ofdm-subcarriers-in-halow)
 
 ![spectrum waterfall](media/spectrum-waterfall.png)
 
-according to docs, MCS 10 is BPSK with R = 1/2 with 2x repetition. This differs from MCS 0 that is also BPSK but R = 1/2, no repetition. With a 8us guard interval, you can expect 150kbps. Going to start simple and try to implement MCS 0 to start, then I'll progress up the MCS in complexity
+## view and modify MCS on HaLow
 
 ![mcs](media/mcs-nsss.png)
-
-based off of the `halow-capture.sigmf-data` looking at the symbol crossings (or what I'm guessing are the symbol crossings) on the time sink, I think the sps is somewhere between 16 and 20 which would be a 500kbaud or 650kbaud signal.
-
-## view and modify MCS on HaLow
 
 To view MCS:
 
@@ -104,10 +118,39 @@ Given the timing constraints and the packet construction below, we can try and c
 
 It takes 560us to get to the LTF2-LTFN field. This roughly lines up with the dense red subcarrier spike width in 1MHz inspectrum captures.
 
+## ieee standards breakdown
+
+Important chapters
+- Ch15 is 802.11 (dsss in 2.4 GHz, 1Mbps, 2Mbps rates) p.2749
+- Ch16 is 802.11b (HT dsss in 2.4ghz 1, 2, 5.5, 11Mbps rates) p.2773
+- Ch17 is 802.11a (ofdm in 5ghz, 5MHz, 10MHz, 20MHz channel widths 6,9,12,18,24,36,48,54 Mbps rates in 10MHz channel) p.2802
+    - P.2807 PPDU format
+    - P.2810-2811 I'm pretty sure this is 802.11a modulation dependent parameters and timing parameters. It looks similar to HaLow at just 10x the rates
+- Ch18 is 802.11b-corrigendum1 (extended rate phy "ERP" dsss in 2.4ghz, backwards compatible with 802.11a/b) p 2848
+- Ch19 is 802.11g (ofdm in 2.4ghz, but also backwards compatible with ch18 dsss in 2.4ghz and ch17 ofdm in 5ghz) p.2860
+    - P.2862 - definition of non-ht, ht-mf, ht-gf. Pretty sure gr-ieee80211 only supports non-ht. Support for ch17/18 packets. Mixed format (MF) has preamble that can be decided by ch17/18 but data that cannot. Greenfield (GF) cannot be recognized at all by ch17/18.
+    - P.2873 PPDU format. Makes sense for delay of 16us because STF and LTF are each 8us. 
+    - P.2880 timing parameters. 48 complex data numbers. 52 sub carriers, highest sun carrier index is 26. 312.25 khz subcarrier spacing
+- Ch20 is directional multi gig, 802.11ad? p.2962
+- Ch21 is very high throughput, 802.11ac? p.3010
+- Ch22 is television very high throughput 802.11af? p.3137
+- Ch23 is 802.11ah (ofdm in S1G, essentially 802.11g knocked down 10x) p.3186
+
+802.11a is basis for halow. 802.11ah is thus an amendment by group "h" to the 802.11a spec. 6 OFDM symbols for the SIG field. 
+
+802.11a/802.11g supported in gr-ieee80211. Both of these use 1 OFDM symbol for their SIG field.
+
+CSD = cyclic shift diversity, there is no cyclic shift for 1 spatial stream (table 23-17)
+
+Table 23-10 on p158 of S1G portions on p3223 of full spec shows that there is only 1 LTF for transmissions that only use 1 spatial stream. This means there is no LTF field after the SIG field for 1MHz transmissions.
+
 ## Misc Resources
 
 - Wi-Fi HaLow breakdown and performance results by Troy Martin (MARCH 2024): [https://youtu.be/oFVj1RES9TU?si=XjW0Y5oUUU09URXw](https://youtu.be/oFVj1RES9TU?si=XjW0Y5oUUU09URXw)
 - MCS and Data Rate Table for WiFi Standards [https://mcsindex.net/](https://mcsindex.net/)
+
+ofdm is like threading in RF. fdm is multiprocessing. It lowers the rate of each stream so that the sum of the stream rates equals the desired bitrate of the whole signal. "in short, instead of sending serial symbols at a rate K/T over a channel with bandwidth W, K symbols in parallel, each at the rate of 1/T are sent over a sub-channel with bandwidth W/K." This helps when fading impacts the band that a signal is transmitted over to essentially create multiple sub-channels where fading doesn't impact signal reception. The alternative is a very complex equalizer.
+- science direct article on OFDM, keysight signal structure for wifi
 
 ## Todo
 
@@ -150,3 +193,25 @@ It takes 560us to get to the LTF2-LTFN field. This roughly lines up with the den
     - "what is the significance of the FFT size 64?" might have something to do with the fact there is a filter kernel with 64 complex samples in the WiFi Sync Long source code that is correlated with the input: https://github.com/bastibl/gr-ieee802-11/blob/ce7097384bb29f9e73777cf1458a072a90430528/lib/sync_long.cc#L257
 - [ ] the 1MHz interleaver is different, as shown in [1mhz interleaver](media/1mhz_interleaver.png). How do you implement the new one?
 - [ ] test your theory of the autocorrelation hidden in plain sight with the wifi_rx.grc flowgraph. Use a canned example to make it easier.
+- [ ] use gr-ieee802_11 built in simulation transceiver to figure out what right should look like
+- [ ] Focus in on one frame specifically, then debug along the chain while disabling downstream blocks. Do the sync blocks really detect where a frame is? If so, try and rewrite the deinterleave and descramble blocks. Just try and make some changes and see what happens.
+- [ ] Reach out to the old WiFi gr dev to see if you're hunch is right about some of the magic numbers. 
+- [ ] Narrow your filter cutoff because you don't need all 1MHz. Nearly 100khz of frequency is free on either side of the signal. Also, how many samples per ofdm symbol are there? We should be able to determine this based on the timing. 1 MHz yields 1us sample period, so a delay of 16 samples yields a delay of 16us. This is the same as the double guard interval. 320 delay IIRC is the STF and LTF right before the SIG field. This would hold true no matter if it's WiFi or if it's halow. 
+- [ ] Is STF and LTF of 2MHz S1G double length that of 802.11a? That would mean STF and LTF of 1MHZ S1G is 4x the length of 802.11a. This might help explain some of the magic numbers - in reality you might need to increase the number of sample delays in GRC 4x.
+- [ ] check out 19.3.9.3.3 for STF construction (frame acquisition? don't really know the purpose)
+- [ ] check out 21.3.8.3.5 for LTF construction (MIMO diversity)
+- [ ] Is the delay and shift intentionally trying to autocorrelate different short training fields? We know the LTF1 has duplicate LTF symbols, so it's possible the STF has two STF symbols they're trying to autocorrelate. Could do the same thing with the LTF delay, but there are 4 repetitions. Could you ignore the last two or can you incorporate them somehow?
+- [ ] is the following statement true? it seems to search for SHORT frames, but I think that the 1M signal does not have short/long frames - its frames are only one type. So now its possible the short and long correlate do not correspond to the STF and LTF but instead correspond with the different packet types. Then that means the different delays are trying to find whether the packet is a short or long type. The delay amount still might signify an autocorrelation with the duplicated STFs or LTFs. 
+- [ ] is the following statement true? I think the "48" that constantly appears in MAC decoding for WiFi 80211 is the number of coded bits per symbol. It just uses the least common multiple for all MCS with 48; even though 64 QAM supports 288, 16QAM supports 192, and 4QAM supports 96, 48 is the LCM for BPSK
+    - there are also only 48 useful subcarriers. The 802.11a specification allocates 64 subcarriers, 11 of which are not used (the first 6 and last 5) and then there are 4 pilots and one unused DC subcarrier (the middle one). This means there are 16 unused data subcarriers, 48 data subcarriers. This number is equal to the number of samples per OFDM symbol. 
+    - I think the statement of the "least common multiple" is a coincidence. I'll have to find the statement in the spec to prove it, but I think the reason why it is always 48 is because of the number of bits per OFDM symbol - even as the rates negotiate higher MCS, your channel width and number of subcarriers never change. 
+- [x] what is bandwidth of subchannel in halow? Thinking back, the short preamble is pretty clear on the spectrum, I think there are 6 or so subcarriers for 1 MHz.
+    - 31.25 kHz. 1/10th that of ieee802.11a. Shown in [timing constraints table](media/timing-constants.png)
+- [ ] what is the 80 constant used in `frame_equalizer_impl.cc` used to compenstate for frequency/phase offset?
+- [ ] where does `frame_equalizer_impl.cc` get the polarity numbers? in general, how do you determine whether to multiply the pilots by 1 or -1 when doing the frequency correction in the frame equalizer? 
+    - maybe you could guess since there aren't that many combos?
+- [x] what is the halow interleaver pattern for `frame_equalizer_impl.cc`? You just inferred based off of the old one 
+    - I think I'm correct based off of [table 23-41](media/mcs-nsss_1mhz.png) and [table 23-20](media/1mhz_interleaver.png) assuming that N_bpscs is 1.
+- [ ] can you use sigdigger inspector to ID PSK/FSK/ASK as well as multi-level? now that you suspect halow is OFDM, can you actually verify 4QAM and BPSK for the different MCS?
+- [ ] p.3247 says that the SIG field is repeated 2x, so you need to incorporate that into your `frame_equalizer_impl.cc` code. I think you don't need to compare the repeated bits, but instead ensure that at least one of the repeated sets has a passing CRC. For now, you could probably just print both out. I'm pretty sure it goes SIG-1a, SIG-1b, SIG-2a, SIG-2b rather than repeating every bit individually.
+    - right now you're only accounting for the first repetition

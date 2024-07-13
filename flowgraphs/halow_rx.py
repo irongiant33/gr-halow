@@ -290,7 +290,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_complex_to_mag_0, 0), (self.blocks_divide_xx_0, 0))
         self.connect((self.blocks_complex_to_mag_squared_0, 0), (self.blocks_moving_average_xx_0, 0))
         self.connect((self.blocks_conjugate_cc_0, 0), (self.blocks_multiply_xx_0, 1))
-        self.connect((self.blocks_delay_0, 0), (self.ieee802_11_sync_long_0, 1))
+        self.connect((self.blocks_delay_0, 0), (self.ieee802_11_sync_long_0, 0))
         self.connect((self.blocks_delay_0_0, 0), (self.blocks_conjugate_cc_0, 0))
         self.connect((self.blocks_delay_0_0, 0), (self.ieee802_11_sync_short_0, 0))
         self.connect((self.blocks_divide_xx_0, 0), (self.ieee802_11_sync_short_0, 2))
@@ -310,7 +310,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self.connect((self.ieee802_11_frame_equalizer_0, 0), (self.ieee802_11_decode_mac_0, 0))
         self.connect((self.ieee802_11_sync_long_0, 0), (self.blocks_stream_to_vector_0, 0))
         self.connect((self.ieee802_11_sync_short_0, 0), (self.blocks_delay_0, 0))
-        self.connect((self.ieee802_11_sync_short_0, 0), (self.ieee802_11_sync_long_0, 0))
+        self.connect((self.ieee802_11_sync_short_0, 0), (self.ieee802_11_sync_long_0, 1))
         self.connect((self.pdu_pdu_to_tagged_stream_0, 0), (self.qtgui_const_sink_x_0, 0))
 
 
