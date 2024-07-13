@@ -14,21 +14,18 @@ from gnuradio import qtgui
 from PyQt5.QtCore import QObject, pyqtSlot
 from gnuradio import blocks
 import pmt
-from gnuradio import fft
-from gnuradio.fft import window
 from gnuradio import filter
 from gnuradio.filter import firdes
 from gnuradio import gr
+from gnuradio.fft import window
 import sys
 import signal
 from PyQt5 import Qt
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
-from gnuradio import gr, pdu
 from gnuradio.qtgui import Range, RangeWidget
 from PyQt5 import QtCore
-import foo
 import ieee802_11
 import sip
 
@@ -73,7 +70,10 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self.samp_rate = samp_rate = 1e6
         self.window_size = window_size = 24
         self.sync_length = sync_length = 320
+        self.stop_time = stop_time = 0.31
+        self.start_time = start_time = 0.292
         self.sdr_center_freq = sdr_center_freq = 918000000
+        self.num_ofdm_subcarriers = num_ofdm_subcarriers = 32
         self.lo_offset = lo_offset = 0
         self.input_samp_rate = input_samp_rate = 10e6
         self.gain = gain = 0.75
@@ -122,6 +122,178 @@ class halow_rx(gr.top_block, Qt.QWidget):
             lambda i: self.set_freq(self._freq_options[i]))
         # Create the radio buttons
         self.top_layout.addWidget(self._freq_tool_bar)
+        self.qtgui_time_sink_x_2 = qtgui.time_sink_c(
+            (int((stop_time - start_time) * samp_rate)), #size
+            samp_rate, #samp_rate
+            "input signal", #name
+            1, #number of inputs
+            None # parent
+        )
+        self.qtgui_time_sink_x_2.set_update_time(0.10)
+        self.qtgui_time_sink_x_2.set_y_axis(-1, 1)
+
+        self.qtgui_time_sink_x_2.set_y_label('Amplitude', "")
+
+        self.qtgui_time_sink_x_2.enable_tags(True)
+        self.qtgui_time_sink_x_2.set_trigger_mode(qtgui.TRIG_MODE_FREE, qtgui.TRIG_SLOPE_POS, 0.0, 0, 0, "")
+        self.qtgui_time_sink_x_2.enable_autoscale(False)
+        self.qtgui_time_sink_x_2.enable_grid(False)
+        self.qtgui_time_sink_x_2.enable_axis_labels(True)
+        self.qtgui_time_sink_x_2.enable_control_panel(False)
+        self.qtgui_time_sink_x_2.enable_stem_plot(False)
+
+
+        labels = ['Signal 1', 'Signal 2', 'Signal 3', 'Signal 4', 'Signal 5',
+            'Signal 6', 'Signal 7', 'Signal 8', 'Signal 9', 'Signal 10']
+        widths = [1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1]
+        colors = ['blue', 'red', 'green', 'black', 'cyan',
+            'magenta', 'yellow', 'dark red', 'dark green', 'dark blue']
+        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0, 1.0]
+        styles = [1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1]
+        markers = [-1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1]
+
+
+        for i in range(2):
+            if len(labels[i]) == 0:
+                if (i % 2 == 0):
+                    self.qtgui_time_sink_x_2.set_line_label(i, "Re{{Data {0}}}".format(i/2))
+                else:
+                    self.qtgui_time_sink_x_2.set_line_label(i, "Im{{Data {0}}}".format(i/2))
+            else:
+                self.qtgui_time_sink_x_2.set_line_label(i, labels[i])
+            self.qtgui_time_sink_x_2.set_line_width(i, widths[i])
+            self.qtgui_time_sink_x_2.set_line_color(i, colors[i])
+            self.qtgui_time_sink_x_2.set_line_style(i, styles[i])
+            self.qtgui_time_sink_x_2.set_line_marker(i, markers[i])
+            self.qtgui_time_sink_x_2.set_line_alpha(i, alphas[i])
+
+        self._qtgui_time_sink_x_2_win = sip.wrapinstance(self.qtgui_time_sink_x_2.qwidget(), Qt.QWidget)
+        self.top_layout.addWidget(self._qtgui_time_sink_x_2_win)
+        self.qtgui_time_sink_x_1 = qtgui.time_sink_c(
+            (int((stop_time - start_time) * samp_rate)), #size
+            samp_rate, #samp_rate
+            "post sync", #name
+            1, #number of inputs
+            None # parent
+        )
+        self.qtgui_time_sink_x_1.set_update_time(0.10)
+        self.qtgui_time_sink_x_1.set_y_axis(-1, 1)
+
+        self.qtgui_time_sink_x_1.set_y_label('Amplitude', "")
+
+        self.qtgui_time_sink_x_1.enable_tags(True)
+        self.qtgui_time_sink_x_1.set_trigger_mode(qtgui.TRIG_MODE_FREE, qtgui.TRIG_SLOPE_POS, 0.0, 0, 0, "")
+        self.qtgui_time_sink_x_1.enable_autoscale(False)
+        self.qtgui_time_sink_x_1.enable_grid(False)
+        self.qtgui_time_sink_x_1.enable_axis_labels(True)
+        self.qtgui_time_sink_x_1.enable_control_panel(False)
+        self.qtgui_time_sink_x_1.enable_stem_plot(False)
+
+
+        labels = ['Signal 1', 'Signal 2', 'Signal 3', 'Signal 4', 'Signal 5',
+            'Signal 6', 'Signal 7', 'Signal 8', 'Signal 9', 'Signal 10']
+        widths = [1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1]
+        colors = ['blue', 'red', 'green', 'black', 'cyan',
+            'magenta', 'yellow', 'dark red', 'dark green', 'dark blue']
+        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0, 1.0]
+        styles = [1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1]
+        markers = [-1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1]
+
+
+        for i in range(2):
+            if len(labels[i]) == 0:
+                if (i % 2 == 0):
+                    self.qtgui_time_sink_x_1.set_line_label(i, "Re{{Data {0}}}".format(i/2))
+                else:
+                    self.qtgui_time_sink_x_1.set_line_label(i, "Im{{Data {0}}}".format(i/2))
+            else:
+                self.qtgui_time_sink_x_1.set_line_label(i, labels[i])
+            self.qtgui_time_sink_x_1.set_line_width(i, widths[i])
+            self.qtgui_time_sink_x_1.set_line_color(i, colors[i])
+            self.qtgui_time_sink_x_1.set_line_style(i, styles[i])
+            self.qtgui_time_sink_x_1.set_line_marker(i, markers[i])
+            self.qtgui_time_sink_x_1.set_line_alpha(i, alphas[i])
+
+        self._qtgui_time_sink_x_1_win = sip.wrapinstance(self.qtgui_time_sink_x_1.qwidget(), Qt.QWidget)
+        self.top_layout.addWidget(self._qtgui_time_sink_x_1_win)
+        self.qtgui_time_sink_x_0_0 = qtgui.time_sink_f(
+            (int((stop_time - start_time) * samp_rate)), #size
+            samp_rate, #samp_rate
+            "", #name
+            1, #number of inputs
+            None # parent
+        )
+        self.qtgui_time_sink_x_0_0.set_update_time(0.10)
+        self.qtgui_time_sink_x_0_0.set_y_axis(-1, 1)
+
+        self.qtgui_time_sink_x_0_0.set_y_label('Amplitude', "")
+
+        self.qtgui_time_sink_x_0_0.enable_tags(True)
+        self.qtgui_time_sink_x_0_0.set_trigger_mode(qtgui.TRIG_MODE_FREE, qtgui.TRIG_SLOPE_POS, 0.0, 0, 0, "")
+        self.qtgui_time_sink_x_0_0.enable_autoscale(False)
+        self.qtgui_time_sink_x_0_0.enable_grid(False)
+        self.qtgui_time_sink_x_0_0.enable_axis_labels(True)
+        self.qtgui_time_sink_x_0_0.enable_control_panel(False)
+        self.qtgui_time_sink_x_0_0.enable_stem_plot(False)
+
+
+        labels = ['', '', '', '', '',
+            '', '', '', '', '']
+        widths = [1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1]
+        colors = ['blue', 'red', 'green', 'black', 'cyan',
+            'magenta', 'yellow', 'dark red', 'dark green', 'dark blue']
+        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0, 1.0]
+        styles = [1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1]
+        markers = [-1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1]
+
+
+        for i in range(1):
+            if len(labels[i]) == 0:
+                self.qtgui_time_sink_x_0_0.set_line_label(i, "Data {0}".format(i))
+            else:
+                self.qtgui_time_sink_x_0_0.set_line_label(i, labels[i])
+            self.qtgui_time_sink_x_0_0.set_line_width(i, widths[i])
+            self.qtgui_time_sink_x_0_0.set_line_color(i, colors[i])
+            self.qtgui_time_sink_x_0_0.set_line_style(i, styles[i])
+            self.qtgui_time_sink_x_0_0.set_line_marker(i, markers[i])
+            self.qtgui_time_sink_x_0_0.set_line_alpha(i, alphas[i])
+
+        self._qtgui_time_sink_x_0_0_win = sip.wrapinstance(self.qtgui_time_sink_x_0_0.qwidget(), Qt.QWidget)
+        self.top_layout.addWidget(self._qtgui_time_sink_x_0_0_win)
+        # Create the options list
+        self._lo_offset_options = [0, 6000000.0, 11000000.0]
+        # Create the labels list
+        self._lo_offset_labels = ['0', '6000000.0', '11000000.0']
+        # Create the combo box
+        self._lo_offset_tool_bar = Qt.QToolBar(self)
+        self._lo_offset_tool_bar.addWidget(Qt.QLabel("'lo_offset'" + ": "))
+        self._lo_offset_combo_box = Qt.QComboBox()
+        self._lo_offset_tool_bar.addWidget(self._lo_offset_combo_box)
+        for _label in self._lo_offset_labels: self._lo_offset_combo_box.addItem(_label)
+        self._lo_offset_callback = lambda i: Qt.QMetaObject.invokeMethod(self._lo_offset_combo_box, "setCurrentIndex", Qt.Q_ARG("int", self._lo_offset_options.index(i)))
+        self._lo_offset_callback(self.lo_offset)
+        self._lo_offset_combo_box.currentIndexChanged.connect(
+            lambda i: self.set_lo_offset(self._lo_offset_options[i]))
+        # Create the radio buttons
+        self.top_layout.addWidget(self._lo_offset_tool_bar)
+        self.ieee802_11_sync_short_0 = ieee802_11.sync_short(0.56, 2, False, True)
+        self.ieee802_11_sync_long_0 = ieee802_11.sync_long(sync_length, False, True)
+        self._gain_range = Range(0, 1, 0.01, 0.75, 200)
+        self._gain_win = RangeWidget(self._gain_range, self.set_gain, "'gain'", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._gain_win)
+        self.freq_xlating_fir_filter_xxx_0 = filter.freq_xlating_fir_filter_ccc((int(input_samp_rate/samp_rate)), firdes.low_pass(1, input_samp_rate, filter_cutoff, filter_transition), (freq - sdr_center_freq), input_samp_rate)
         # Create the options list
         self._chan_est_options = [0, 1, 2, 3]
         # Create the labels list
@@ -147,132 +319,12 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self._chan_est_button_group.buttonClicked[int].connect(
             lambda i: self.set_chan_est(self._chan_est_options[i]))
         self.top_layout.addWidget(self._chan_est_group_box)
-        self.qtgui_time_sink_x_0 = qtgui.time_sink_f(
-            1024, #size
-            samp_rate, #samp_rate
-            "", #name
-            1, #number of inputs
-            None # parent
-        )
-        self.qtgui_time_sink_x_0.set_update_time(0.10)
-        self.qtgui_time_sink_x_0.set_y_axis(-1, 1)
-
-        self.qtgui_time_sink_x_0.set_y_label('Amplitude', "")
-
-        self.qtgui_time_sink_x_0.enable_tags(True)
-        self.qtgui_time_sink_x_0.set_trigger_mode(qtgui.TRIG_MODE_FREE, qtgui.TRIG_SLOPE_POS, 0.0, 0, 0, "")
-        self.qtgui_time_sink_x_0.enable_autoscale(False)
-        self.qtgui_time_sink_x_0.enable_grid(False)
-        self.qtgui_time_sink_x_0.enable_axis_labels(True)
-        self.qtgui_time_sink_x_0.enable_control_panel(False)
-        self.qtgui_time_sink_x_0.enable_stem_plot(False)
-
-
-        labels = ['', '', '', '', '',
-            '', '', '', '', '']
-        widths = [1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1]
-        colors = ['blue', 'red', 'green', 'black', 'cyan',
-            'magenta', 'yellow', 'dark red', 'dark green', 'dark blue']
-        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0, 1.0]
-        styles = [1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1]
-        markers = [-1, -1, -1, -1, -1,
-            -1, -1, -1, -1, -1]
-
-
-        for i in range(1):
-            if len(labels[i]) == 0:
-                self.qtgui_time_sink_x_0.set_line_label(i, "Data {0}".format(i))
-            else:
-                self.qtgui_time_sink_x_0.set_line_label(i, labels[i])
-            self.qtgui_time_sink_x_0.set_line_width(i, widths[i])
-            self.qtgui_time_sink_x_0.set_line_color(i, colors[i])
-            self.qtgui_time_sink_x_0.set_line_style(i, styles[i])
-            self.qtgui_time_sink_x_0.set_line_marker(i, markers[i])
-            self.qtgui_time_sink_x_0.set_line_alpha(i, alphas[i])
-
-        self._qtgui_time_sink_x_0_win = sip.wrapinstance(self.qtgui_time_sink_x_0.qwidget(), Qt.QWidget)
-        self.top_layout.addWidget(self._qtgui_time_sink_x_0_win)
-        self.qtgui_const_sink_x_0 = qtgui.const_sink_c(
-            (48*10), #size
-            "", #name
-            1, #number of inputs
-            None # parent
-        )
-        self.qtgui_const_sink_x_0.set_update_time(0.10)
-        self.qtgui_const_sink_x_0.set_y_axis((-2), 2)
-        self.qtgui_const_sink_x_0.set_x_axis((-2), 2)
-        self.qtgui_const_sink_x_0.set_trigger_mode(qtgui.TRIG_MODE_FREE, qtgui.TRIG_SLOPE_POS, 0.0, 0, "")
-        self.qtgui_const_sink_x_0.enable_autoscale(False)
-        self.qtgui_const_sink_x_0.enable_grid(False)
-        self.qtgui_const_sink_x_0.enable_axis_labels(True)
-
-
-        labels = ['', '', '', '', '',
-            '', '', '', '', '']
-        widths = [1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1]
-        colors = ["blue", "red", "red", "red", "red",
-            "red", "red", "red", "red", "red"]
-        styles = [0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0]
-        markers = [0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0]
-        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0, 1.0]
-
-        for i in range(1):
-            if len(labels[i]) == 0:
-                self.qtgui_const_sink_x_0.set_line_label(i, "Data {0}".format(i))
-            else:
-                self.qtgui_const_sink_x_0.set_line_label(i, labels[i])
-            self.qtgui_const_sink_x_0.set_line_width(i, widths[i])
-            self.qtgui_const_sink_x_0.set_line_color(i, colors[i])
-            self.qtgui_const_sink_x_0.set_line_style(i, styles[i])
-            self.qtgui_const_sink_x_0.set_line_marker(i, markers[i])
-            self.qtgui_const_sink_x_0.set_line_alpha(i, alphas[i])
-
-        self._qtgui_const_sink_x_0_win = sip.wrapinstance(self.qtgui_const_sink_x_0.qwidget(), Qt.QWidget)
-        self.top_layout.addWidget(self._qtgui_const_sink_x_0_win)
-        self.pdu_pdu_to_tagged_stream_0 = pdu.pdu_to_tagged_stream(gr.types.complex_t, 'packet_len')
-        # Create the options list
-        self._lo_offset_options = [0, 6000000.0, 11000000.0]
-        # Create the labels list
-        self._lo_offset_labels = ['0', '6000000.0', '11000000.0']
-        # Create the combo box
-        self._lo_offset_tool_bar = Qt.QToolBar(self)
-        self._lo_offset_tool_bar.addWidget(Qt.QLabel("'lo_offset'" + ": "))
-        self._lo_offset_combo_box = Qt.QComboBox()
-        self._lo_offset_tool_bar.addWidget(self._lo_offset_combo_box)
-        for _label in self._lo_offset_labels: self._lo_offset_combo_box.addItem(_label)
-        self._lo_offset_callback = lambda i: Qt.QMetaObject.invokeMethod(self._lo_offset_combo_box, "setCurrentIndex", Qt.Q_ARG("int", self._lo_offset_options.index(i)))
-        self._lo_offset_callback(self.lo_offset)
-        self._lo_offset_combo_box.currentIndexChanged.connect(
-            lambda i: self.set_lo_offset(self._lo_offset_options[i]))
-        # Create the radio buttons
-        self.top_layout.addWidget(self._lo_offset_tool_bar)
-        self.ieee802_11_sync_short_0 = ieee802_11.sync_short(0.56, 2, False, False)
-        self.ieee802_11_sync_long_0 = ieee802_11.sync_long(sync_length, False, False)
-        self.ieee802_11_parse_mac_0 = ieee802_11.parse_mac(False, False)
-        self.ieee802_11_frame_equalizer_0 = ieee802_11.frame_equalizer(ieee802_11.Equalizer(chan_est), freq, samp_rate, False, False)
-        self.ieee802_11_decode_mac_0 = ieee802_11.decode_mac(False, False)
-        self._gain_range = Range(0, 1, 0.01, 0.75, 200)
-        self._gain_win = RangeWidget(self._gain_range, self.set_gain, "'gain'", "counter_slider", float, QtCore.Qt.Horizontal)
-        self.top_layout.addWidget(self._gain_win)
-        self.freq_xlating_fir_filter_xxx_0 = filter.freq_xlating_fir_filter_ccc((int(input_samp_rate/samp_rate)), firdes.low_pass(1, input_samp_rate, filter_cutoff, filter_transition), (freq - sdr_center_freq), input_samp_rate)
-        self.foo_wireshark_connector_0 = foo.wireshark_connector(127, False)
-        self.fft_vxx_0 = fft.fft_vcc(64, True, window.rectangular(64), True, 1)
         self.blocks_throttle_0 = blocks.throttle(gr.sizeof_gr_complex*1, input_samp_rate,True)
-        self.blocks_stream_to_vector_0 = blocks.stream_to_vector(gr.sizeof_gr_complex*1, 64)
-        self.blocks_sigmf_source_minimal_0 = blocks.file_source(gr.sizeof_gr_complex, '/home/irongiant/Documents/gr-halow/captures/halow-capture-1mhz-mcs0.sigmf-data', False, 0, 0)
-        self.blocks_sigmf_source_minimal_0.set_begin_tag(pmt.PMT_NIL)
         self.blocks_multiply_xx_0 = blocks.multiply_vcc(1)
         self.blocks_moving_average_xx_1 = blocks.moving_average_cc(window_size, 1, 4000, 1)
         self.blocks_moving_average_xx_0 = blocks.moving_average_ff((window_size  + additional_window_size), 1, 4000, 1)
-        self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_char*1, '/tmp/wifi.pcap', False)
-        self.blocks_file_sink_0.set_unbuffered(True)
+        self.blocks_file_source_0 = blocks.file_source(gr.sizeof_gr_complex*1, '/home/irongiant/Documents/gr-halow/captures/halow-capture-1mhz-mcs0.sigmf-data', False, (int(start_time * input_samp_rate)), (int((stop_time - start_time) * input_samp_rate)))
+        self.blocks_file_source_0.set_begin_tag(pmt.PMT_NIL)
         self.blocks_divide_xx_0 = blocks.divide_ff(1)
         self.blocks_delay_0_0 = blocks.delay(gr.sizeof_gr_complex*1, additional_window_size)
         self.blocks_delay_0 = blocks.delay(gr.sizeof_gr_complex*1, sync_length)
@@ -284,34 +336,27 @@ class halow_rx(gr.top_block, Qt.QWidget):
         ##################################################
         # Connections
         ##################################################
-        self.msg_connect((self.ieee802_11_decode_mac_0, 'out'), (self.foo_wireshark_connector_0, 'in'))
-        self.msg_connect((self.ieee802_11_decode_mac_0, 'out'), (self.ieee802_11_parse_mac_0, 'in'))
-        self.msg_connect((self.ieee802_11_frame_equalizer_0, 'symbols'), (self.pdu_pdu_to_tagged_stream_0, 'pdus'))
         self.connect((self.blocks_complex_to_mag_0, 0), (self.blocks_divide_xx_0, 0))
+        self.connect((self.blocks_complex_to_mag_0, 0), (self.ieee802_11_sync_short_0, 2))
         self.connect((self.blocks_complex_to_mag_squared_0, 0), (self.blocks_moving_average_xx_0, 0))
         self.connect((self.blocks_conjugate_cc_0, 0), (self.blocks_multiply_xx_0, 1))
         self.connect((self.blocks_delay_0, 0), (self.ieee802_11_sync_long_0, 0))
         self.connect((self.blocks_delay_0_0, 0), (self.blocks_conjugate_cc_0, 0))
         self.connect((self.blocks_delay_0_0, 0), (self.ieee802_11_sync_short_0, 0))
-        self.connect((self.blocks_divide_xx_0, 0), (self.ieee802_11_sync_short_0, 2))
-        self.connect((self.blocks_divide_xx_0, 0), (self.qtgui_time_sink_x_0, 0))
+        self.connect((self.blocks_divide_xx_0, 0), (self.qtgui_time_sink_x_0_0, 0))
+        self.connect((self.blocks_file_source_0, 0), (self.blocks_throttle_0, 0))
         self.connect((self.blocks_moving_average_xx_0, 0), (self.blocks_divide_xx_0, 1))
         self.connect((self.blocks_moving_average_xx_1, 0), (self.blocks_complex_to_mag_0, 0))
         self.connect((self.blocks_moving_average_xx_1, 0), (self.ieee802_11_sync_short_0, 1))
         self.connect((self.blocks_multiply_xx_0, 0), (self.blocks_moving_average_xx_1, 0))
-        self.connect((self.blocks_sigmf_source_minimal_0, 0), (self.blocks_throttle_0, 0))
-        self.connect((self.blocks_stream_to_vector_0, 0), (self.fft_vxx_0, 0))
         self.connect((self.blocks_throttle_0, 0), (self.freq_xlating_fir_filter_xxx_0, 0))
-        self.connect((self.fft_vxx_0, 0), (self.ieee802_11_frame_equalizer_0, 0))
-        self.connect((self.foo_wireshark_connector_0, 0), (self.blocks_file_sink_0, 0))
         self.connect((self.freq_xlating_fir_filter_xxx_0, 0), (self.blocks_complex_to_mag_squared_0, 0))
         self.connect((self.freq_xlating_fir_filter_xxx_0, 0), (self.blocks_delay_0_0, 0))
         self.connect((self.freq_xlating_fir_filter_xxx_0, 0), (self.blocks_multiply_xx_0, 0))
-        self.connect((self.ieee802_11_frame_equalizer_0, 0), (self.ieee802_11_decode_mac_0, 0))
-        self.connect((self.ieee802_11_sync_long_0, 0), (self.blocks_stream_to_vector_0, 0))
+        self.connect((self.freq_xlating_fir_filter_xxx_0, 0), (self.qtgui_time_sink_x_2, 0))
+        self.connect((self.ieee802_11_sync_long_0, 0), (self.qtgui_time_sink_x_1, 0))
         self.connect((self.ieee802_11_sync_short_0, 0), (self.blocks_delay_0, 0))
         self.connect((self.ieee802_11_sync_short_0, 0), (self.ieee802_11_sync_long_0, 1))
-        self.connect((self.pdu_pdu_to_tagged_stream_0, 0), (self.qtgui_const_sink_x_0, 0))
 
 
     def closeEvent(self, event):
@@ -329,8 +374,9 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self.samp_rate = samp_rate
         self.set_filter_cutoff((self.samp_rate / 2) + (self.samp_rate /10))
         self._samp_rate_callback(self.samp_rate)
-        self.ieee802_11_frame_equalizer_0.set_bandwidth(self.samp_rate)
-        self.qtgui_time_sink_x_0.set_samp_rate(self.samp_rate)
+        self.qtgui_time_sink_x_0_0.set_samp_rate(self.samp_rate)
+        self.qtgui_time_sink_x_1.set_samp_rate(self.samp_rate)
+        self.qtgui_time_sink_x_2.set_samp_rate(self.samp_rate)
 
     def get_window_size(self):
         return self.window_size
@@ -347,12 +393,30 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self.sync_length = sync_length
         self.blocks_delay_0.set_dly(int(self.sync_length))
 
+    def get_stop_time(self):
+        return self.stop_time
+
+    def set_stop_time(self, stop_time):
+        self.stop_time = stop_time
+
+    def get_start_time(self):
+        return self.start_time
+
+    def set_start_time(self, start_time):
+        self.start_time = start_time
+
     def get_sdr_center_freq(self):
         return self.sdr_center_freq
 
     def set_sdr_center_freq(self, sdr_center_freq):
         self.sdr_center_freq = sdr_center_freq
         self.freq_xlating_fir_filter_xxx_0.set_center_freq((self.freq - self.sdr_center_freq))
+
+    def get_num_ofdm_subcarriers(self):
+        return self.num_ofdm_subcarriers
+
+    def set_num_ofdm_subcarriers(self, num_ofdm_subcarriers):
+        self.num_ofdm_subcarriers = num_ofdm_subcarriers
 
     def get_lo_offset(self):
         return self.lo_offset
@@ -382,7 +446,6 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self.freq = freq
         self._freq_callback(self.freq)
         self.freq_xlating_fir_filter_xxx_0.set_center_freq((self.freq - self.sdr_center_freq))
-        self.ieee802_11_frame_equalizer_0.set_frequency(self.freq)
 
     def get_filter_transition(self):
         return self.filter_transition
@@ -404,7 +467,6 @@ class halow_rx(gr.top_block, Qt.QWidget):
     def set_chan_est(self, chan_est):
         self.chan_est = chan_est
         self._chan_est_callback(self.chan_est)
-        self.ieee802_11_frame_equalizer_0.set_algorithm(ieee802_11.Equalizer(self.chan_est))
 
     def get_additional_window_size(self):
         return self.additional_window_size
