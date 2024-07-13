@@ -1,0 +1,22 @@
+client: `iperf3 -c 192.168.100.171 -p 4444`
+server: `iperf3 -s -p 4444`
+
+Connecting to host 192.168.100.171, port 4444
+[  5] local 192.168.100.246 port 57828 connected to 192.168.100.171 port 4444
+[ ID] Interval           Transfer     Bitrate         Retr  Cwnd
+[  5]   0.00-1.00   sec   274 KBytes  2.25 Mbits/sec    0   21.2 KBytes       
+[  5]   1.00-2.00   sec   170 KBytes  1.39 Mbits/sec    0   21.2 KBytes       
+[  5]   2.00-3.00   sec   170 KBytes  1.39 Mbits/sec    0   21.2 KBytes       
+[  5]   3.00-4.00   sec   170 KBytes  1.39 Mbits/sec    0   21.2 KBytes       
+[  5]   4.00-5.00   sec   170 KBytes  1.39 Mbits/sec    0   21.2 KBytes       
+[  5]   5.00-6.00   sec   204 KBytes  1.67 Mbits/sec    0   21.2 KBytes       
+[  5]   6.00-7.00   sec   170 KBytes  1.39 Mbits/sec    0   21.2 KBytes       
+[  5]   7.00-8.00   sec   204 KBytes  1.67 Mbits/sec    0   21.2 KBytes       
+[  5]   8.00-9.00   sec   136 KBytes  1.11 Mbits/sec    0   21.2 KBytes       
+[  5]   9.00-10.00  sec   204 KBytes  1.67 Mbits/sec    0   21.2 KBytes       
+- - - - - - - - - - - - - - - - - - - - - - - - -
+[ ID] Interval           Transfer     Bitrate         Retr
+[  5]   0.00-10.00  sec  1.83 MBytes  1.53 Mbits/sec    0             sender
+[  5]   0.00-10.05  sec  1.75 MBytes  1.46 Mbits/sec                  receiver
+
+iperf Done.
