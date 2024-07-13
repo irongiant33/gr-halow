@@ -226,6 +226,18 @@ blocks:
     coordinate: [176, 12.0]
     rotation: 0
     state: enabled
+- name: num_ofdm_subcarriers
+  id: variable
+  parameters:
+    comment: aka num samples per ofdm symbol
+    value: '32'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 224.0]
+    rotation: 0
+    state: enabled
 - name: samp_rate
   id: variable_qtgui_chooser
   parameters:
@@ -286,7 +298,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [8, 148.0]
+    coordinate: [8, 160.0]
     rotation: 0
     state: enabled
 - name: window_size
@@ -423,7 +435,7 @@ blocks:
     bus_structure: null
     coordinate: [288, 788.0]
     rotation: 180
-    state: enabled
+    state: disabled
 - name: blocks_moving_average_xx_0
   id: blocks_moving_average_xx
   parameters:
@@ -482,6 +494,23 @@ blocks:
     coordinate: [1040, 312.0]
     rotation: 0
     state: enabled
+- name: blocks_null_sink_0
+  id: blocks_null_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    bus_structure_sink: '[[0,],]'
+    comment: ''
+    num_inputs: '1'
+    type: byte
+    vlen: '24'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [848, 816.0]
+    rotation: 180
+    state: true
 - name: blocks_sigmf_source_minimal_0
   id: blocks_sigmf_source_minimal
   parameters:
@@ -510,7 +539,7 @@ blocks:
     comment: ''
     maxoutbuf: '0'
     minoutbuf: '0'
-    num_items: '64'
+    num_items: int(num_ofdm_subcarriers)
     type: complex
     vlen: '1'
   states:
@@ -545,14 +574,14 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    fft_size: '64'
+    fft_size: int(num_ofdm_subcarriers)
     forward: 'True'
     maxoutbuf: '0'
     minoutbuf: '0'
     nthreads: '1'
     shift: 'True'
     type: complex
-    window: window.rectangular(64)
+    window: window.rectangular(32)
   states:
     bus_sink: false
     bus_source: false
@@ -576,7 +605,7 @@ blocks:
     bus_structure: null
     coordinate: [536, 796.0]
     rotation: 180
-    state: enabled
+    state: disabled
 - name: freq_xlating_fir_filter_xxx_0
   id: freq_xlating_fir_filter_xxx
   parameters:
@@ -613,7 +642,7 @@ blocks:
     bus_structure: null
     coordinate: [816, 740.0]
     rotation: 180
-    state: enabled
+    state: disabled
 - name: ieee802_11_frame_equalizer_0
   id: ieee802_11_frame_equalizer
   parameters:
@@ -650,7 +679,7 @@ blocks:
     bus_structure: null
     coordinate: [576, 716.0]
     rotation: 180
-    state: enabled
+    state: disabled
 - name: ieee802_11_sync_long_0
   id: ieee802_11_sync_long
   parameters:
@@ -674,7 +703,9 @@ blocks:
   parameters:
     affinity: ''
     alias: ''
-    comment: ''
+    comment: "plateau is a count of how many times the input \ncorrelation stream\
+      \ is greater than the threshold.\nThe plateau count starts at 0 and when it\
+      \ exceeds\nthe MIN_PLATEAU, it changes state from SEARCH to COPY"
     debug: 'False'
     log: 'False'
     maxoutbuf: '0'
@@ -1365,7 +1396,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [32, 244.0]
+    coordinate: [40, 280.0]
     rotation: 0
     state: disabled
 
@@ -1392,6 +1423,7 @@ connections:
 - [freq_xlating_fir_filter_xxx_0, '0', blocks_multiply_xx_0, '0']
 - [ieee802_11_decode_mac_0, out, foo_wireshark_connector_0, in]
 - [ieee802_11_decode_mac_0, out, ieee802_11_parse_mac_0, in]
+- [ieee802_11_frame_equalizer_0, '0', blocks_null_sink_0, '0']
 - [ieee802_11_frame_equalizer_0, '0', ieee802_11_decode_mac_0, '0']
 - [ieee802_11_frame_equalizer_0, symbols, pdu_pdu_to_tagged_stream_0, pdus]
 - [ieee802_11_sync_long_0, '0', blocks_stream_to_vector_0, '0']
