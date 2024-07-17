@@ -144,6 +144,39 @@ CSD = cyclic shift diversity, there is no cyclic shift for 1 spatial stream (tab
 
 Table 23-10 on p158 of S1G portions on p3223 of full spec shows that there is only 1 LTF for transmissions that only use 1 spatial stream. This means there is no LTF field after the SIG field for 1MHz transmissions.
 
+Section 17.3.4.2 p.2815 has rate bit codes for 802.11a that comes native with `frame_equalizer.cc`. For example:
+- `1101` gets 6 Mbps for 20 MHz channels, 3 Mbps for 10 MHz channels, 1.5 Mbps for 5 MHz channels
+- `0101` gets 12 Mbps for 20 MHz channels, 6 Mbps for 10 MHz channels, 3 Mbps for 3 MHz channels
+
+`sync_length` input into `sync_long` block within `wifi_rx.grc` examples is 320. This corresponds to the number of samples that are in the PHY PREAMBLE. Check out Table 17-5 for verification of this (p.2810). This is constant regardless of the channel bandwidth, 20 MHz, 10 MHz, 5 MHz. This is because the preamble length (time wise) changes based off of the channel bandwidth but the preamble length (samples) does not change.
+- when `offset == sync_length`, the `sync_long` block starts to search for frames.
+
+```
+*--------------*--------*------*
+| PHY PREAMBLE | SIGNAL | DATA |
+*--------------*--------*------*
+```
+
+PHY PREAMBLE in 802.11a/g is 10x repetitions of a short sequence for AGC acquisition, timing, and coarse frequency correction. Then there are 2x repetitions of the long sequuences for fine frequency & channel estimation. It is 16us long (for a 20MHz channel) which means there are 320 samples for the preamble. Then, the SIGNAL field is 80 samples long (because there is just 1 OFDM symbol) and comprises the following information:
+
+```
+*------*----------*--------*--------*------*
+| RATE | RESERVED | LENGTH | PARITY | TAIL |
+*------*----------*--------*--------*------*
+```
+
+The rate is 4 bits, 1 reserved bit, 12 length bits, 1 parity bit, and 6 tail bits. The DATA field repeats as many times as necessary (i.e. transmits as many OFDM symbols as necessary) to send the data, but generally is formatted as follows:
+
+```
+*---------*------*------*-----*
+| SERVICE | PSDU | TAIL | PAD |
+*---------*------*------*-----*
+```
+
+Service field is 16 bits, PSDU varies depending on the data you want to send, the TAIL is 6 bits, and the PAD varies depending on the data you want to send such that there are an even number of OFDM symbols sent.
+
+
+
 ## Misc Resources
 
 - Wi-Fi HaLow breakdown and performance results by Troy Martin (MARCH 2024): [https://youtu.be/oFVj1RES9TU?si=XjW0Y5oUUU09URXw](https://youtu.be/oFVj1RES9TU?si=XjW0Y5oUUU09URXw)
@@ -191,6 +224,7 @@ ofdm is like threading in RF. fdm is multiprocessing. It lowers the rate of each
     - this will also help you answer the question "why delay by 16 samples?", "is there significance to a 48 'window size' moving average?", and "how does a 320 'sync length' impact the WiFi long sync?", "what is the significance of the FFT size 64?"
     - "is there a significance to a 48 'window size' moving average?" if 48 is the number of coded bits per subcarrier in standard WiFi, then according to Table 23-41 above, the number of coded bits per subcarrier (N_CBPS) is 24 for 1 MHz MCS=0.
     - "what is the significance of the FFT size 64?" might have something to do with the fact there is a filter kernel with 64 complex samples in the WiFi Sync Long source code that is correlated with the input: https://github.com/bastibl/gr-ieee802-11/blob/ce7097384bb29f9e73777cf1458a072a90430528/lib/sync_long.cc#L257
+        - should be due to the 64 total possible subcarriers. 
 - [ ] the 1MHz interleaver is different, as shown in [1mhz interleaver](media/1mhz_interleaver.png). How do you implement the new one?
 - [ ] test your theory of the autocorrelation hidden in plain sight with the wifi_rx.grc flowgraph. Use a canned example to make it easier.
 - [ ] use gr-ieee802_11 built in simulation transceiver to figure out what right should look like
@@ -207,7 +241,6 @@ ofdm is like threading in RF. fdm is multiprocessing. It lowers the rate of each
     - I think the statement of the "least common multiple" is a coincidence. I'll have to find the statement in the spec to prove it, but I think the reason why it is always 48 is because of the number of bits per OFDM symbol - even as the rates negotiate higher MCS, your channel width and number of subcarriers never change. 
 - [x] what is bandwidth of subchannel in halow? Thinking back, the short preamble is pretty clear on the spectrum, I think there are 6 or so subcarriers for 1 MHz.
     - 31.25 kHz. 1/10th that of ieee802.11a. Shown in [timing constraints table](media/timing-constants.png)
-- [ ] what is the 80 constant used in `frame_equalizer_impl.cc` used to compenstate for frequency/phase offset?
 - [ ] where does `frame_equalizer_impl.cc` get the polarity numbers? in general, how do you determine whether to multiply the pilots by 1 or -1 when doing the frequency correction in the frame equalizer? 
     - maybe you could guess since there aren't that many combos?
     - is it from [table I-21](media/polarity.png) on p.4170?
@@ -220,3 +253,9 @@ ofdm is like threading in RF. fdm is multiprocessing. It lowers the rate of each
 - [ ] p.3247 says that the SIG field is repeated 2x, so you need to incorporate that into your `frame_equalizer_impl.cc` code. I think you don't need to compare the repeated bits, but instead ensure that at least one of the repeated sets has a passing CRC. For now, you could probably just print both out. I'm pretty sure it goes SIG-1a, SIG-1b, SIG-2a, SIG-2b rather than repeating every bit individually.
     - right now you're only accounting for the first repetition
 - [ ] p.4170 has some interesting time domain representation tables. Is this where the fixed 64 size complex FIR filter kernel comes from in the `sync_long_impl.cc`?
+- [ ] There is a MATLAB S1G waveform generator on the IEEE website (document number 11-14/0631). It can do 1 MHz & 2 MHz for 1-2 spatial streams and has a GUI to control it. Look into it?
+- [ ] The LONG array in `sync_long_impl.cc` does not correspond to anything in the spec, but the LONG array in `base.cc` corresponds to Table I-5 in the Appendix. Where does the LONG array in `sync_long_impl.cc` come from?
+- [ ] does `sync_long_impl.cc` copy all of the samples for the entire WiFi frame after it finds the preamble? Or does it just copy the SIGNAL field?
+- [x] where does `80` value come from on line 139 of `sync_long.cc`, and line 164 & 183 of `frame_equalizer.cc`?
+    - I am pretty sure that it is the number of samples that corresponds to the symbol period in table 17-5 (p.2810). Similar to the `320` value, this is constant regardless of the channel bandwidth because the period of the symbol will increase for smaller channel bandwidths, but the number of samples will stay the same.
+- [ ] what is `15` value on line 139 of `sync_long_impl.cc`? I thought it would've corresponded to a guard interval, but with a GI of 0.8us on Table 17-5 (p.2810), that would correspond to 16 samples, not 15. 
