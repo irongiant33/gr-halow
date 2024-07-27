@@ -265,11 +265,22 @@ ofdm is like threading in RF. fdm is multiprocessing. It lowers the rate of each
 - [x] what is bandwidth of subchannel in halow? Thinking back, the short preamble is pretty clear on the spectrum, I think there are 6 or so subcarriers for 1 MHz.
     - 31.25 kHz. 1/10th that of ieee802.11a. Shown in [timing constraints table](media/timing-constants.png)
 - [x] where does `frame_equalizer_impl.cc` get the polarity numbers? in general, how do you determine whether to multiply the pilots by 1 or -1 when doing the frequency correction in the frame equalizer? 
-    - maybe you could guess since there aren't that many combos?
-    - is it from [table I-21](media/polarity.png) on p.4170?
-    - combo of the table above and from section 17.3.5.10 on p.2826, it might be the same, just taking from the first 32 indices instead of using the full 127 described. p.3247, the S1G_1M spec, cites that it takes from 17.3.5.10 and only defined n from 0 to 5
-    - or does it also incorporate [table 21-21](media/pilotvalues.png) from p.3087 in combination with the equation on p.3253 (S1G pilots) for n=0 to n=5?
-    - maybe the n=0 to n=5 from equation 23-42 on p.3247 is only for the 6 OFDM symbols of the SIG field? The rest of the polarities in 17.3.5.10 on p.2826 are for successive symbols, and if the number of symbols are greater than 127, then it just wraps around?
+    - the n=0 to n=5 (i.e. OFDM symbol index, 6 because there are 6 OFDM symbols in the SIG field for HaLow) from equation 23-42 on p.3247 is only for the 6 OFDM symbols of the SIG field. This equation references the polarity values on p.2826 which are the same from 802.11a. The rest of the polarities in 17.3.5.10 on p.2826 are for successive symbols, and if the number of symbols are greater than 127, then it just wraps around.
+    - equation 23-42 references old polarity values for 2MHz and up channels. For 1 MHz it is defined on p.3253 essentially stating that the original polarities are multiplied by 0 for every subcarrier that is not a pilot (i.e. index +/-7) and the factor for the pilots is given by a table on p.3087, redrawn below. Essentially, the polarity is governed by the sample index so I might need to incorporate the table below as well as the index on p.3253 (-7 index subcarrier is govered by `(n%2) + 2` and +7 index subcarrier governed by `((n + 1)%2) + 2`). Otherwise, this relationship is governed by rule in 802.11ac on p.3086-3087 (which also uses 17.3.5.10 on p.2826) and also by table on p.2911 from 802.11g
+
+    | gamma_0 | gamma_1 | gamma_2 | gamma_3 | gamma_4 | gamma_5 | gamma_6 | gamma_7 |
+    |---------|---------|---------|---------|---------|---------|---------|---------|
+    |  1      |   1     |       1 | -1      |   -1    | 1       |   1     |    1    |
+
+    | OFDM symbol index (n) | -7 pilot polarity factor | +7 pilot polarity factor |
+    |-----------------------|--------------------------|--------------------------|
+    |        0              |            1             |              -1          |
+    |        1              |            -1            |               1          |
+    |       2               |            1             |               -1         |
+    |       3               |           -1             |                1         |
+    |       4               |           1              |                -1        |
+    |       5               |           -1             |                 1        |
+
 - [x] what is the halow interleaver pattern for `frame_equalizer_impl.cc`? You just inferred based off of the old one 
     - I think I'm correct based off of [table 23-41](media/mcs-nsss_1mhz.png) and [table 23-20](media/1mhz_interleaver.png) assuming that N_bpscs is 1.
 - [x] where does `80` value come from on line 139 of `sync_long.cc`, and line 164 & 183 of `frame_equalizer.cc`?
