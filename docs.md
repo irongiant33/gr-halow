@@ -25,7 +25,7 @@ Below is a picture of the spectrum waterfall. For visual verification of the sub
 
 ## view and modify MCS on HaLow
 
-![mcs](media/mcs-nsss.png)
+![mcs](media/mcs-nsss_1mhz.png)
 
 To view MCS:
 
@@ -190,10 +190,57 @@ the above image was from commit `25a4858795a04dd1569dcee04be4bb9633dc4705` on gr
 ofdm is like threading in RF. fdm is multiprocessing. It lowers the rate of each stream so that the sum of the stream rates equals the desired bitrate of the whole signal. "in short, instead of sending serial symbols at a rate K/T over a channel with bandwidth W, K symbols in parallel, each at the rate of 1/T are sent over a sub-channel with bandwidth W/K." This helps when fading impacts the band that a signal is transmitted over to essentially create multiple sub-channels where fading doesn't impact signal reception. The alternative is a very complex equalizer.
 - science direct article on OFDM, keysight signal structure for wifi
 
-## Todo
+## Todo (priority order)
 
+- [ ] try using gr-ieee80211 for some of the standard channels? It might possibly recognize the data, just in a different band. break out gr-ieee80211 to see if you can get anything to make sense. It might not work end-to-end, but it could serve as a good basis.
+    - started to break this out and have it in the `halow_rx.grc` flowgraph. When I enable/disable some of the logging, it seems that the receive chain recognizes the packets and demodulation but likely does not recognize the MAC. Nothing makes sense in Wireshark or the "WiFi Decode MAC" block. The checksum keeps dropping, but it is getting full packets.
+    - [ ] p.4170 has some interesting time domain representation tables. Is this where the fixed 64 size complex FIR filter kernel comes from in the `sync_long_impl.cc`?
+        - The LONG array in `sync_long_impl.cc` does not correspond to anything in the spec, but the LONG array in `base.cc` corresponds to Table I-5 in the Appendix. Where does the LONG array in `sync_long_impl.cc` come from?
+    - [ ] does `sync_long_impl.cc` copy all of the samples for the entire WiFi frame after it finds the preamble? Or does it just copy the SIGNAL field?
+    - [ ] what is `15` value on line 139 of `sync_long_impl.cc`? I thought it would've corresponded to a guard interval, but with a GI of 0.8us on Table 17-5 (p.2810), that would correspond to 16 samples, not 15. Maybe it is just an off by 1?
+    - [ ] where does `MAX_GAP` and `MAX_SAMPLES` come from in the beginning of `sync_short.cc`? Maybe it comes from the MTU that drives how long DATA field could be at max, so MAX_SAMPLES is literally the maximum number of samples for the whole PPDU? If true, the PHY PREAMBLE and SIGNAL field together for a 20MHz channel (16us + 4us) would be 400 samples, leaving 140 for the DATA which does not make much sense...you would think it should be divisible by 80, or at least 64 (the length of one OFDM symbol plus GI or just the length of one OFDM symbol)
+    - [ ] read into the WiFi Sync Short and WiFi Sync Long blocks from gr-ieee80211 because it does match with the order of the STF and LTF1 in the PPDU. If you get those right, you may be able to decode the SIG field, but there is another LTF2 after SIG which does not track with the gr-ieee80211 flowgraph. Decoding the SIG field would be a good step in the right direction though. This will also help you answer the following questions:
+        - [x] how does a 320 'sync length' impact the WiFi long sync?
+            - 320 samples is the sum of the time, in samples, of both the STF and LTF for 802.11a. See Table 17-5. Essentially, this whole autocorrelator would just be so that we could detect the frame from the STF/LTF then pass to frame equalizer to pull information out of the SIG field.
+        - [x] why delay by 16 samples in the GRC flowgraph?
+            - 16 samples corresponds to the guard interval length of 0.8us for 802.11a (see table 17-5)
+        - [x] is there a significance to a 48 'window size' moving average?
+            - if 48 is the number of coded bits per subcarrier in standard WiFi, then according to Table 23-41 above, the number of coded bits per subcarrier (N_CBPS) is 24 for 1 MHz MCS=0.
+        - [x] what is the significance of the FFT size 64?
+            - might have something to do with the fact there is a filter kernel with 64 complex samples in the WiFi Sync Long source code that is correlated with the input: https://github.com/bastibl/gr-ieee802-11/blob/ce7097384bb29f9e73777cf1458a072a90430528/lib/sync_long.cc#L257
+            - should be due to the 64 total possible subcarriers in 802.11a/g
+    - [ ] use gr-ieee802_11 built in simulation transceiver to figure out what right should look like
+    - [ ] Focus in on one frame specifically, then debug along the chain while disabling downstream blocks. Do the sync blocks really detect where a frame is? If so, try and rewrite the deinterleave and descramble blocks. Just try and make some changes and see what happens.
+    - [ ] Narrow your filter cutoff because you don't need all 1MHz. Nearly 100khz of frequency is free on either side of the signal. 
+    - [x] Also, how many samples per ofdm symbol are there? 
+        - 40 for HaLow, 1 MHz channel for a 40us OFDM symbol period. We should be able to determine this based on the timing. 1 MHz yields 1us sample period, so a delay of 16 samples yields a delay of 16us. This is the same as the double guard interval. 320 delay IIRC is the STF and LTF right before the SIG field. This would hold true no matter if it's WiFi or if it's halow. 
+- [ ] p.3247 says that the SIG field is repeated 2x, so you need to incorporate that into your `frame_equalizer_impl.cc` code. I think you don't need to compare the repeated bits, but instead ensure that at least one of the repeated sets has a passing CRC. For now, you could probably just print both out. I'm pretty sure it goes SIG-1a, SIG-1b, SIG-2a, SIG-2b rather than repeating every bit individually.
+    - right now you're only accounting for the first repetition
+- [ ] is the following statement true? it seems to search for SHORT frames, but I think that the 1M signal does not have short/long frames - its frames are only one type. So now its possible the short and long correlate do not correspond to the STF and LTF but instead correspond with the different packet types. Then that means the different delays are trying to find whether the packet is a short or long type. The delay amount still might signify an autocorrelation with the duplicated STFs or LTFs. 
+- [ ] analyze the BPSK capture. Why do the two captures look the same even though the first capture is likely at a higher MCS? Perhaps the preambles are always the same for synchronization, and the data is still different. [https://www.sigidwiki.com/wiki/Phase_Shift_Keying_(PSK)#google_vignette](https://www.sigidwiki.com/wiki/Phase_Shift_Keying_(PSK)#google_vignette)
+    - [ ] analyze the BPSK capture. Did some analysis using SDRAngel's Capture Analyzer, but I'm not super proficient with the tool yet so I don't have anything conclusive. It did appear to look like BPSK, but I didn't get PLL lock or any metadata out.
+    - [ ] try suscan for analysis capabilities? 
+    - [ ] can you use sigdigger inspector to ID PSK/FSK/ASK as well as multi-level? now that you suspect halow is OFDM, can you actually verify 4QAM and BPSK for the different MCS?
+- [ ] maybe you just need more gain following the SigMF data?
+- [ ] check out 19.3.9.3.3 for STF construction (frame acquisition? don't really know the purpose)
+- [ ] check out 21.3.8.3.5 for LTF construction (MIMO diversity)
+- [ ] any documents from newracom, morse micro that might help?
+- [ ] There is a MATLAB S1G waveform generator on the IEEE website (document number 11-14/0631). It can do 1 MHz & 2 MHz for 1-2 spatial streams and has a GUI to control it. Look into it?
+- [ ] if you have the HaLowU plugged in, does it appear as a Wireshark capture device?
+- [ ] start building modem examples for a basic chatroom style tx/rx so you can lean on these for your halow tx/halow rx. Generate BPSK at 1 MHz bandwidth and compare with HaLow capture
+- [ ] start building modem examples for a basic chatroom style tx/rx so you can lean on these for your halow tx/halow rx
 - [ ] Range testing at this channel, propagation analysis model. While you are range testing, see if you can force the lowest number of spatial streams and the lowest MCS.
 - [ ] try adding attenuators or take HaLow-U at extended range to force lower MCS?
+- [ ] build energy detector and correlator that could identify active HaLow channels?
+- [x] the 1MHz interleaver is different, as shown in [1mhz interleaver](media/1mhz_interleaver.png). How do you implement the new one?
+    - changes are in the gr-ieee802-11 lib/frame_equalizer_impl.cc file. Essentially, I just had to create a matrix with 3 rows, 8 columns where the index incremented from 1 to 23 (i.e. covering all 24 data subcarriers) starting in the first row, first column, going down the column, and starting over in the 0th row next column.
+    - BPSCS is the number of coded bits per single carrier for each spatial stream. For BPSK, this is 1 but you can find all these values in Table 23-41 for 1 MHz.
+- [x] how long is the STF/LTF for different bandwidths? 
+    - STF/LTF is 2 OFDM symbols long for anything 2 MHz or greater. For 1 MHz, the STF and LTF is 4 OFDM symbols long. See the [timing constants](media/timing-constants.png) table for more information. The significant part here is not that the period (in seconds) stays constant for different bandwidths (because it doesn't), but that the **number of samples** stays constant. For 2MHz and above, there will always be 80 samples for both the STF and LTF. 1/2MHz = 0.5us, LTF/STF period is 80us which yields 160 samples. 1/4MHz = 0.25us which would yield 320 samples for the same period. 1/1MHz = 1us, which for the LTF/STF of 1MHz channel (160us period) would also yield 160 samples. Table 17-5 of the WiFi spec shows these sample values are constant for different bandwidths, but in HaLow the sample size is not constant. 
+- [x] try capturing other MCS values?
+   - [x] run iperf3 with higher MCS values to make sure the data rate values make sense. I tried running it with MCS 8 & 9 but it was not successful - its possible the HaLowU doesn't support MCS 8 and 9.
+   - [x] make a 2MHz capture at various MCS because that is what the old WiFi supported at a minimum. 1 MHz is unique to HaLow. See 23.3.8.3 of specification for 1 MHz format.
+   - refer to the [testing link speed](#testing-link-speed) section and also the captures folder. Made 1, 2, and 4 MHz captures each with MCS0 and with rate control on.
 - [x] how can you determine whether there is 1 or multiple spatial streams? **answer**: I am fairly certain there can only be 1 spatial stream on the HaLowU because there is only 1 antenna. These explanations helped my understanding: [https://www.digitalairwireless.com/articles/blog/wi-fi-spatial-streaming-explained](https://www.digitalairwireless.com/articles/blog/wi-fi-spatial-streaming-explained). Also, the definition of a spatial stream in the HaLow specification document is "spatial stream: One of several streams of bits or modulation symbols that might be transmitted over multiple spatial dimensions that are created by the use of multiple antennas at both ends of a communications link." (p.170).
 - [x] is there a way to verify on the HaLow which MCS index is being used? It might be automatically negotiated based on what is available; will also have to read through the specification more to determine if this is the case. What worries me is that the network config picture shows that the TX and RX rate is 6 Mbps which means that the HaLow's may have negotiated for multiple spatial streams and a higher MCS. Just with a cursory look, it seems like this time domain plot is multi-level phase shift keying. For BPSK I would expect constant amplitude
 ![time domain](media/time-domain-halow-capture.jpg)
@@ -203,65 +250,43 @@ ofdm is like threading in RF. fdm is multiprocessing. It lowers the rate of each
 - [x] how many spatial streams does the Halow-U support? **answer** 4, see [mcs picture](media/mcs-nsss.png)
     - according to HaLow-U docs, it only supports 1/2/4 MHz channels, so you don't have to worry about 8 or 16 MHz channels from the IEEE specification. See specification of HaLow-U here: [https://store.rokland.com/products/alfa-network-halow-u-802-11ah-halow-usb-adapter-support-ap-client-mode](https://store.rokland.com/products/alfa-network-halow-u-802-11ah-halow-usb-adapter-support-ap-client-mode)
 - [x] Attempt Wireshark FIFO to see if it detects Wi-Fi frames? **answer**: this won't be possible until there is a program that processes HaLow frames from the PHY. The reason why some people can do this with bluetooth or wifi is that there are decoders (like ice9 bluetooth sniffer) that parse raw RF into layer 2 that Wireshark can read.
-- [ ] start building modem examples for a basic chatroom style tx/rx so you can lean on these for your halow tx/halow rx. Generate BPSK at 1 MHz bandwidth and compare with HaLow capture
-- [ ] analyze the BPSK capture. Why do the two captures look the same even though the first capture is likely at a higher MCS? Perhaps the preambles are always the same for synchronization, and the data is still different. [https://www.sigidwiki.com/wiki/Phase_Shift_Keying_(PSK)#google_vignette](https://www.sigidwiki.com/wiki/Phase_Shift_Keying_(PSK)#google_vignette)
-- [ ] try capturing other MCS values?
-- [ ] run iperf3 with higher MCS values to make sure the data rate values make sense. I tried running it with MCS 8 & 9 but it was not successful - its possible the HaLowU doesn't support MCS 8 and 9.
-- [ ] how to determine SPS? since the web app told me that I should expect 6 Mbps, can you use this information in tandem with the modulation scheme to determine SPS? For example, 6 Mbps with 16QAM should yield 1.5M baud? If this is true, maybe my timing estimates are off. Even 6 Mbps with 64 QAM would yield 1M baud and I'm seeing half that rate still.
-
-    - [ ] if you have the HaLowU plugged in, does it appear as a Wireshark capture device?
-- [ ] start building modem examples for a basic chatroom style tx/rx so you can lean on these for your halow tx/halow rx
-- [ ] analyze the BPSK capture. Did some analysis using SDRAngel's Capture Analyzer, but I'm not super proficient with the tool yet so I don't have anything conclusive. It did appear to look like BPSK, but I didn't get PLL lock or any metadata out.
-- [ ] how to determine SPS? since the web app told me that I should expect 1 Mbps, can you use this information in tandem with the modulation scheme to determine SPS? For example, 6 Mbps with 16QAM should yield 1.5M baud? If this is true, maybe my timing estimates are off. Even 6 Mbps with 64 QAM would yield 1M baud and I'm seeing half that rate still.
-- [ ] maybe you just need more gain following the SigMF data?
-- [ ] try using gr-ieee80211 for some of the standard channels? It might possibly recognize the data, just in a different band. break out gr-ieee80211 to see if you can get anything to make sense. It might not work end-to-end, but it could serve as a good basis.
-    - started to break this out and have it in the `halow_rx.grc` flowgraph. When I enable/disable some of the logging, it seems that the receive chain recognizes the packets and demodulation but likely does not recognize the MAC. Nothing makes sense in Wireshark or the "WiFi Decode MAC" block. The checksum keeps dropping, but it is getting full packets.
-- [ ] try suscan for analysis capabilities? 
+- [x] how to determine SPS? since the web app told me that I should expect 6 Mbps, can you use this information in tandem with the modulation scheme to determine SPS? For example, 6 Mbps with 16QAM should yield 1.5M baud? If this is true, maybe my timing estimates are off. Even 6 Mbps with 64 QAM would yield 1M baud and I'm seeing half that rate still.
+    - SPS is different for OFDM signals. Taking the case of 1 MHz HaLow bandwidth, there are 32 subcarriers that are further broken down by the specification into ignored subcarriers, pilot subcarriers, and data subcarriers. Regardless, the bandwidth of each subcarrier is 1 MHz / 32 = 31.25 kHz. Thus, the period of each subcarrier symbol is 1/31.25 kHz = 32us. The specification adds a 8us guard interval to each symbol, which makes the total period 40us. Each OFDM symbol thus contains data from 24 data subcarriers (2 subcarriers for pilots, 6 unused subcarriers) but is sampled at a 1 MHz rate which yields 1 / 1MHz = 1us sample periods, yielding 40 samples per OFDM symbol. See the [timing constants](media/timing-constants.png) table for more info.
 - [x] been 6 years since this was contributed to, but does it work? [https://github.com/dverhaert/GNUradio-802.11ah](https://github.com/dverhaert/GNUradio-802.11ah)
     - essentially this is a copy of gr-ieee80211, so it is not worth exploring.
-- [ ] any documents from newracom, morse micro that might help?
-- [ ] build energy detector and correlator that could identify active HaLow channels?
-- [ ] make a 2MHz capture at various MCS because that is what the old WiFi supported at a minimum. 1 MHz is unique to HaLow. See 23.3.8.3 of specification for 1 MHz format.
-- [ ] does HaLow also use Viterbi encoding/decoding? 
+- [x] does HaLow also use Viterbi encoding/decoding? 
     - 23.3.9.4.2 "BCC encoder parsing operation": "the BCC encoder parsing operation for S1G PPDUs is the same as those specified in 21.3.10.5.2". Section 23.3.9.4.4 "LDPC coding" covers the modifications to LDPC code and encoding process for S1G single user (SU) PPDU.
-- [ ] how long is the STF/LTF for different bandwidths? 
-- [ ] read into the WiFi Sync Short and WiFi Sync Long blocks from gr-ieee80211 because it does match with the order of the STF and LTF1 in the PPDU. If you get those right, you may be able to decode the SIG field, but there is another LTF2 after SIG which does not track with the gr-ieee80211 flowgraph. Decoding the SIG field would be a good step in the right direction though
-    - this will also help you answer the question "why delay by 16 samples?", "is there significance to a 48 'window size' moving average?", and "how does a 320 'sync length' impact the WiFi long sync?", "what is the significance of the FFT size 64?"
-    - "is there a significance to a 48 'window size' moving average?" if 48 is the number of coded bits per subcarrier in standard WiFi, then according to Table 23-41 above, the number of coded bits per subcarrier (N_CBPS) is 24 for 1 MHz MCS=0.
-    - "what is the significance of the FFT size 64?" might have something to do with the fact there is a filter kernel with 64 complex samples in the WiFi Sync Long source code that is correlated with the input: https://github.com/bastibl/gr-ieee802-11/blob/ce7097384bb29f9e73777cf1458a072a90430528/lib/sync_long.cc#L257
-        - should be due to the 64 total possible subcarriers. 
-- [ ] the 1MHz interleaver is different, as shown in [1mhz interleaver](media/1mhz_interleaver.png). How do you implement the new one?
-- [ ] test your theory of the autocorrelation hidden in plain sight with the wifi_rx.grc flowgraph. Use a canned example to make it easier.
-- [ ] use gr-ieee802_11 built in simulation transceiver to figure out what right should look like
-- [ ] Focus in on one frame specifically, then debug along the chain while disabling downstream blocks. Do the sync blocks really detect where a frame is? If so, try and rewrite the deinterleave and descramble blocks. Just try and make some changes and see what happens.
-- [ ] Reach out to the old WiFi gr dev to see if you're hunch is right about some of the magic numbers. 
-- [ ] Narrow your filter cutoff because you don't need all 1MHz. Nearly 100khz of frequency is free on either side of the signal. Also, how many samples per ofdm symbol are there? We should be able to determine this based on the timing. 1 MHz yields 1us sample period, so a delay of 16 samples yields a delay of 16us. This is the same as the double guard interval. 320 delay IIRC is the STF and LTF right before the SIG field. This would hold true no matter if it's WiFi or if it's halow. 
-- [ ] Is STF and LTF of 2MHz S1G double length that of 802.11a? That would mean STF and LTF of 1MHZ S1G is 4x the length of 802.11a. This might help explain some of the magic numbers - in reality you might need to increase the number of sample delays in GRC 4x.
-- [ ] check out 19.3.9.3.3 for STF construction (frame acquisition? don't really know the purpose)
-- [ ] check out 21.3.8.3.5 for LTF construction (MIMO diversity)
-- [ ] Is the delay and shift intentionally trying to autocorrelate different short training fields? We know the LTF1 has duplicate LTF symbols, so it's possible the STF has two STF symbols they're trying to autocorrelate. Could do the same thing with the LTF delay, but there are 4 repetitions. Could you ignore the last two or can you incorporate them somehow?
-- [ ] is the following statement true? it seems to search for SHORT frames, but I think that the 1M signal does not have short/long frames - its frames are only one type. So now its possible the short and long correlate do not correspond to the STF and LTF but instead correspond with the different packet types. Then that means the different delays are trying to find whether the packet is a short or long type. The delay amount still might signify an autocorrelation with the duplicated STFs or LTFs. 
-- [ ] is the following statement true? I think the "48" that constantly appears in MAC decoding for WiFi 80211 is the number of coded bits per symbol. It just uses the least common multiple for all MCS with 48; even though 64 QAM supports 288, 16QAM supports 192, and 4QAM supports 96, 48 is the LCM for BPSK
+- [x] test your theory of the autocorrelation hidden in plain sight with the wifi_rx.grc flowgraph. Use a canned example to make it easier.
+    - fairly sure this is just an autocorrelation
+- [x] Reach out to the old WiFi gr dev to see if you're hunch is right about some of the magic numbers.
+    - pull request opened on gr-ieee802-11
+- [x] Is STF and LTF of 2MHz S1G double length that of 802.11a? That would mean STF and LTF of 1MHZ S1G is 4x the length of 802.11a. This might help explain some of the magic numbers - in reality you might need to increase the number of sample delays in GRC 4x.
+    - no, but essentially you need to pay attention to the [timing constants](media/timing-constants.png) and compare them with the [ieee802-11a timing constants](media/ieee80211a_timing-constants.png). Each case varies, 802.11a does a good job of keeping constant sample lengths, but 802.11ah doesn't do that.
+- [x] Is the delay and shift intentionally trying to autocorrelate different short training fields? We know the LTF1 has duplicate LTF symbols, so it's possible the STF has two STF symbols they're trying to autocorrelate. Could do the same thing with the LTF delay, but there are 4 repetitions. Could you ignore the last two or can you incorporate them somehow?
+    - yes, I believe the delay and shift in the examples GRC flowgraph for ieee802-11 is an autocorrelation on the LTF/STF to frame synchronize and pull info out of the SIG field. While there could be more LTFs after the SIG field in 802.11ah, but Table 23-10 shows that for 1 spatial time stream, there is only 1LTF so this frame wouldn't exist until you have more than 1 spatial time stream.
+- [x] is the following statement true? I think the "48" that constantly appears in MAC decoding for WiFi 80211 is the number of coded bits per symbol. It just uses the least common multiple for all MCS with 48; even though 64 QAM supports 288, 16QAM supports 192, and 4QAM supports 96, 48 is the LCM for BPSK
     - there are also only 48 useful subcarriers. The 802.11a specification allocates 64 subcarriers, 11 of which are not used (the first 6 and last 5) and then there are 4 pilots and one unused DC subcarrier (the middle one). This means there are 16 unused data subcarriers, 48 data subcarriers. This number is equal to the number of samples per OFDM symbol. 
     - I think the statement of the "least common multiple" is a coincidence. I'll have to find the statement in the spec to prove it, but I think the reason why it is always 48 is because of the number of bits per OFDM symbol - even as the rates negotiate higher MCS, your channel width and number of subcarriers never change. 
 - [x] what is bandwidth of subchannel in halow? Thinking back, the short preamble is pretty clear on the spectrum, I think there are 6 or so subcarriers for 1 MHz.
     - 31.25 kHz. 1/10th that of ieee802.11a. Shown in [timing constraints table](media/timing-constants.png)
-- [ ] where does `frame_equalizer_impl.cc` get the polarity numbers? in general, how do you determine whether to multiply the pilots by 1 or -1 when doing the frequency correction in the frame equalizer? 
-    - maybe you could guess since there aren't that many combos?
-    - is it from [table I-21](media/polarity.png) on p.4170?
-    - combo of the table above and from section 17.3.5.10 on p.2826, it might be the same, just taking from the first 32 indices instead of using the full 127 described. p.3247, the S1G_1M spec, cites that it takes from 17.3.5.10 and only defined n from 0 to 5
-    - or does it also incorporate [table 21-21](media/pilotvalues.png) from p.3087 in combination with the equation on p.3253 (S1G pilots) for n=0 to n=5?
-    - maybe the n=0 to n=5 from equation 23-42 on p.3247 is only for the 6 OFDM symbols of the SIG field? The rest of the polarities in 17.3.5.10 on p.2826 are for successive symbols, and if the number of symbols are greater than 127, then it just wraps around?
+- [x] where does `frame_equalizer_impl.cc` get the polarity numbers? in general, how do you determine whether to multiply the pilots by 1 or -1 when doing the frequency correction in the frame equalizer? 
+    - the n=0 to n=5 (i.e. OFDM symbol index, 6 because there are 6 OFDM symbols in the SIG field for HaLow) from equation 23-42 on p.3247 is only for the 6 OFDM symbols of the SIG field. This equation references the polarity values on p.2826 which are the same from 802.11a. The rest of the polarities in 17.3.5.10 on p.2826 are for successive symbols, and if the number of symbols are greater than 127, then it just wraps around.
+    - equation 23-42 references old polarity values for 2MHz and up channels. For 1 MHz it is defined on p.3253 essentially stating that the original polarities are multiplied by 0 for every subcarrier that is not a pilot (i.e. index +/-7) and the factor for the pilots is given by a table on p.3087, redrawn below. Essentially, the polarity is governed by the sample index so I might need to incorporate the table below as well as the index on p.3253 (-7 index subcarrier is govered by `(n%2) + 2` and +7 index subcarrier governed by `((n + 1)%2) + 2`). Otherwise, this relationship is governed by rule in 802.11ac on p.3086-3087 (which also uses 17.3.5.10 on p.2826) and also by table on p.2911 from 802.11g
+
+    | gamma_0 | gamma_1 | gamma_2 | gamma_3 | gamma_4 | gamma_5 | gamma_6 | gamma_7 |
+    |---------|---------|---------|---------|---------|---------|---------|---------|
+    |  1      |   1     |       1 | -1      |   -1    | 1       |   1     |    1    |
+
+    | OFDM symbol index (n) | -7 pilot polarity factor | +7 pilot polarity factor |
+    |-----------------------|--------------------------|--------------------------|
+    |        0              |            1             |              -1          |
+    |        1              |            -1            |               1          |
+    |       2               |            1             |               -1         |
+    |       3               |           -1             |                1         |
+    |       4               |           1              |                -1        |
+    |       5               |           -1             |                 1        |
+
 - [x] what is the halow interleaver pattern for `frame_equalizer_impl.cc`? You just inferred based off of the old one 
     - I think I'm correct based off of [table 23-41](media/mcs-nsss_1mhz.png) and [table 23-20](media/1mhz_interleaver.png) assuming that N_bpscs is 1.
-- [ ] can you use sigdigger inspector to ID PSK/FSK/ASK as well as multi-level? now that you suspect halow is OFDM, can you actually verify 4QAM and BPSK for the different MCS?
-- [ ] p.3247 says that the SIG field is repeated 2x, so you need to incorporate that into your `frame_equalizer_impl.cc` code. I think you don't need to compare the repeated bits, but instead ensure that at least one of the repeated sets has a passing CRC. For now, you could probably just print both out. I'm pretty sure it goes SIG-1a, SIG-1b, SIG-2a, SIG-2b rather than repeating every bit individually.
-    - right now you're only accounting for the first repetition
-- [ ] p.4170 has some interesting time domain representation tables. Is this where the fixed 64 size complex FIR filter kernel comes from in the `sync_long_impl.cc`?
-- [ ] There is a MATLAB S1G waveform generator on the IEEE website (document number 11-14/0631). It can do 1 MHz & 2 MHz for 1-2 spatial streams and has a GUI to control it. Look into it?
-- [ ] The LONG array in `sync_long_impl.cc` does not correspond to anything in the spec, but the LONG array in `base.cc` corresponds to Table I-5 in the Appendix. Where does the LONG array in `sync_long_impl.cc` come from?
-- [ ] does `sync_long_impl.cc` copy all of the samples for the entire WiFi frame after it finds the preamble? Or does it just copy the SIGNAL field?
 - [x] where does `80` value come from on line 139 of `sync_long.cc`, and line 164 & 183 of `frame_equalizer.cc`?
     - I am pretty sure that it is the number of samples that corresponds to the symbol period in table 17-5 (p.2810). Similar to the `320` value, this is constant regardless of the channel bandwidth because the period of the symbol will increase for smaller channel bandwidths, but the number of samples will stay the same.
-- [ ] what is `15` value on line 139 of `sync_long_impl.cc`? I thought it would've corresponded to a guard interval, but with a GI of 0.8us on Table 17-5 (p.2810), that would correspond to 16 samples, not 15. 
-- [ ] where does `MAX_GAP` and `MAX_SAMPLES` come from in the beginning of `sync_short.cc`? Maybe it comes from the MTU that drives how long DATA field could be at max, so MAX_SAMPLES is literally the maximum number of samples for the whole PPDU? If true, the PHY PREAMBLE and SIGNAL field together for a 20MHz channel (16us + 4us) would be 400 samples, leaving 140 for the DATA which does not make much sense...you would think it should be divisible by 80, or at least 64 (the length of one OFDM symbol plus GI or just the length of one OFDM symbol)
