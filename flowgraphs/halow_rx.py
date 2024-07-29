@@ -174,7 +174,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self._qtgui_time_sink_x_2_win = sip.wrapinstance(self.qtgui_time_sink_x_2.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_time_sink_x_2_win)
         self.qtgui_time_sink_x_1 = qtgui.time_sink_c(
-            (int((stop_time - start_time) * samp_rate)), #size
+            256, #size
             samp_rate, #samp_rate
             "post sync", #name
             1, #number of inputs
@@ -225,7 +225,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self._qtgui_time_sink_x_1_win = sip.wrapinstance(self.qtgui_time_sink_x_1.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_time_sink_x_1_win)
         self.qtgui_time_sink_x_0_0 = qtgui.time_sink_f(
-            (int((stop_time - start_time) * samp_rate)), #size
+            (int((stop_time - start_time) * samp_rate) - 8), #size
             samp_rate, #samp_rate
             "", #name
             1, #number of inputs
@@ -288,8 +288,8 @@ class halow_rx(gr.top_block, Qt.QWidget):
             lambda i: self.set_lo_offset(self._lo_offset_options[i]))
         # Create the radio buttons
         self.top_layout.addWidget(self._lo_offset_tool_bar)
-        self.ieee802_11_sync_short_0 = ieee802_11.sync_short(0.56, 2, False, True)
-        self.ieee802_11_sync_long_0 = ieee802_11.sync_long(sync_length, False, True)
+        self.ieee802_11_sync_short_0 = ieee802_11.sync_short(0.56, 2, False, False)
+        self.ieee802_11_sync_long_0 = ieee802_11.sync_long(sync_length, False, False)
         self._gain_range = Range(0, 1, 0.01, 0.75, 200)
         self._gain_win = RangeWidget(self._gain_range, self.set_gain, "'gain'", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._gain_win)

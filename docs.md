@@ -3,6 +3,7 @@
 - [testing link speed](#testing-link-speed)
 - [visual verification of subcarriers](#visual-verification-of-number-of-ofdm-subcarriers-in-halow)
 - [ieee standards breakdown](#ieee-standards-breakdown)
+- [wifi synchronization](#wifi-synchronization)
 - [misc resources](#misc-resources)
 - [todo](#todo)
 
@@ -174,6 +175,10 @@ The rate is 4 bits, 1 reserved bit, 12 length bits, 1 parity bit, and 6 tail bit
 ```
 
 Service field is 16 bits, PSDU varies depending on the data you want to send, the TAIL is 6 bits, and the PAD varies depending on the data you want to send such that there are an even number of OFDM symbols sent.
+
+## WiFi Synchronization
+
+![no-sync-output](media/no-sync-output.png)
 
 
 

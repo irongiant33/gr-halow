@@ -389,7 +389,9 @@ blocks:
   parameters:
     affinity: ''
     alias: ''
-    comment: ''
+    comment: 'old: 320
+
+      length of STF and LTF in samples?'
     delay: sync_length
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -409,7 +411,9 @@ blocks:
   parameters:
     affinity: ''
     alias: ''
-    comment: ''
+    comment: 'old: 16
+
+      is this one guard interval duration?'
     delay: additional_window_size
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -487,7 +491,9 @@ blocks:
   parameters:
     affinity: ''
     alias: ''
-    comment: ''
+    comment: 'old: 64
+
+      number of total subcarriers?'
     length: window_size  + additional_window_size
     max_iter: '4000'
     maxoutbuf: '0'
@@ -507,7 +513,9 @@ blocks:
   parameters:
     affinity: ''
     alias: ''
-    comment: ''
+    comment: 'old: 48
+
+      number of data subcarriers?'
     length: window_size
     max_iter: '4000'
     maxoutbuf: '0'
@@ -732,7 +740,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    debug: 'True'
+    debug: 'False'
     log: 'False'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -752,7 +760,7 @@ blocks:
     comment: "plateau is a count of how many times the input \ncorrelation stream\
       \ is greater than the threshold.\nThe plateau count starts at 0 and when it\
       \ exceeds\nthe MIN_PLATEAU, it changes state from SEARCH to COPY"
-    debug: 'True'
+    debug: 'False'
     log: 'False'
     maxoutbuf: '0'
     min_plateau: '2'
@@ -1041,7 +1049,7 @@ blocks:
     marker9: '-1'
     name: '""'
     nconnections: '1'
-    size: int((stop_time - start_time) * samp_rate)
+    size: int((stop_time - start_time) * samp_rate) - 8
     srate: samp_rate
     stemplot: 'False'
     style1: '1'
@@ -1138,7 +1146,7 @@ blocks:
     marker9: '-1'
     name: '"post sync"'
     nconnections: '1'
-    size: int((stop_time - start_time) * samp_rate)
+    size: '256'
     srate: samp_rate
     stemplot: 'False'
     style1: '1'
