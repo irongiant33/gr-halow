@@ -180,7 +180,7 @@ Service field is 16 bits, PSDU varies depending on the data you want to send, th
 
 ![no-sync-output](media/no-sync-output.png)
 
-
+the above image was from commit `25a4858795a04dd1569dcee04be4bb9633dc4705` on gr-halow and `ef66318257fdfba0914792cbccbcf6e319b918e1` on modified fork of gr-ieee80211. You can see the bottom output from the autocorrelation part in the gnu radio flowgraph synchronizes roughly to the beginning of frame but we still don't have any output from wifi sync long.
 
 ## Misc Resources
 
