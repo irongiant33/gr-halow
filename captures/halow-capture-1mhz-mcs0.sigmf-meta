@@ -17,7 +17,8 @@
   "annotations": [
     {
       "core:comment": "gnuradioconf is the mesh network name of the HaLow-U network.",
-      "core:comment": "ran iperf3 between clients connected to each of the HaLow-U's, reported in a *.iperf3 capture of the same name. 551 Kbits/s for sender, 496 Kbits/s for receiver."
+      "core:comment": "ran iperf3 between clients connected to each of the HaLow-U's, reported in a *.iperf3 capture of the same name. 551 Kbits/s for sender, 496 Kbits/s for receiver.",
+      "core:comment": "start_time=0.292, stop_time=0.310 for halow_rx.grc generated many of the static photos such as sync-plots.png"
     }
   ]
 }

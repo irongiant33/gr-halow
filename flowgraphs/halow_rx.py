@@ -6,26 +6,25 @@
 #
 # GNU Radio Python Flow Graph
 # Title: Halow Rx
-# GNU Radio version: 3.10.7.0
+# GNU Radio version: 3.10.10.0
 
-from packaging.version import Version as StrictVersion
 from PyQt5 import Qt
 from gnuradio import qtgui
+from PyQt5 import QtCore
 from PyQt5.QtCore import QObject, pyqtSlot
 from gnuradio import blocks
 import pmt
+from gnuradio import fft
+from gnuradio.fft import window
 from gnuradio import filter
 from gnuradio.filter import firdes
 from gnuradio import gr
-from gnuradio.fft import window
 import sys
 import signal
 from PyQt5 import Qt
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
-from gnuradio.qtgui import Range, RangeWidget
-from PyQt5 import QtCore
 import ieee802_11
 import sip
 
@@ -57,10 +56,9 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self.settings = Qt.QSettings("GNU Radio", "halow_rx")
 
         try:
-            if StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
-                self.restoreGeometry(self.settings.value("geometry").toByteArray())
-            else:
-                self.restoreGeometry(self.settings.value("geometry"))
+            geometry = self.settings.value("geometry")
+            if geometry:
+                self.restoreGeometry(geometry)
         except BaseException as exc:
             print(f"Qt GUI: Could not restore geometry: {str(exc)}", file=sys.stderr)
 
@@ -87,8 +85,8 @@ class halow_rx(gr.top_block, Qt.QWidget):
         # Blocks
         ##################################################
 
-        self._sdr_center_freq_range = Range(902000000, 928000000, 100000, 918000000, 200)
-        self._sdr_center_freq_win = RangeWidget(self._sdr_center_freq_range, self.set_sdr_center_freq, "'sdr_center_freq'", "counter_slider", float, QtCore.Qt.Horizontal)
+        self._sdr_center_freq_range = qtgui.Range(902000000, 928000000, 100000, 918000000, 200)
+        self._sdr_center_freq_win = qtgui.RangeWidget(self._sdr_center_freq_range, self.set_sdr_center_freq, "'sdr_center_freq'", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._sdr_center_freq_win)
         # Create the options list
         self._samp_rate_options = [1000000.0, 2000000.0, 4000000.0, 5000000.0, 10000000.0, 20000000.0]
@@ -122,6 +120,31 @@ class halow_rx(gr.top_block, Qt.QWidget):
             lambda i: self.set_freq(self._freq_options[i]))
         # Create the radio buttons
         self.top_layout.addWidget(self._freq_tool_bar)
+        # Create the options list
+        self._chan_est_options = [0, 1, 2, 3]
+        # Create the labels list
+        self._chan_est_labels = ['LS', 'LMS', 'Linear Comb', 'STA']
+        # Create the combo box
+        # Create the radio buttons
+        self._chan_est_group_box = Qt.QGroupBox("'chan_est'" + ": ")
+        self._chan_est_box = Qt.QHBoxLayout()
+        class variable_chooser_button_group(Qt.QButtonGroup):
+            def __init__(self, parent=None):
+                Qt.QButtonGroup.__init__(self, parent)
+            @pyqtSlot(int)
+            def updateButtonChecked(self, button_id):
+                self.button(button_id).setChecked(True)
+        self._chan_est_button_group = variable_chooser_button_group()
+        self._chan_est_group_box.setLayout(self._chan_est_box)
+        for i, _label in enumerate(self._chan_est_labels):
+            radio_button = Qt.QRadioButton(_label)
+            self._chan_est_box.addWidget(radio_button)
+            self._chan_est_button_group.addButton(radio_button, i)
+        self._chan_est_callback = lambda i: Qt.QMetaObject.invokeMethod(self._chan_est_button_group, "updateButtonChecked", Qt.Q_ARG("int", self._chan_est_options.index(i)))
+        self._chan_est_callback(self.chan_est)
+        self._chan_est_button_group.buttonClicked[int].connect(
+            lambda i: self.set_chan_est(self._chan_est_options[i]))
+        self.top_layout.addWidget(self._chan_est_group_box)
         self.qtgui_time_sink_x_2 = qtgui.time_sink_c(
             (int((stop_time - start_time) * samp_rate)), #size
             samp_rate, #samp_rate
@@ -173,10 +196,61 @@ class halow_rx(gr.top_block, Qt.QWidget):
 
         self._qtgui_time_sink_x_2_win = sip.wrapinstance(self.qtgui_time_sink_x_2.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_time_sink_x_2_win)
-        self.qtgui_time_sink_x_1 = qtgui.time_sink_c(
-            256, #size
+        self.qtgui_time_sink_x_1_0 = qtgui.time_sink_c(
+            16500, #size
             samp_rate, #samp_rate
-            "post sync", #name
+            "post sync short", #name
+            1, #number of inputs
+            None # parent
+        )
+        self.qtgui_time_sink_x_1_0.set_update_time(0.10)
+        self.qtgui_time_sink_x_1_0.set_y_axis(-1, 1)
+
+        self.qtgui_time_sink_x_1_0.set_y_label('Amplitude', "")
+
+        self.qtgui_time_sink_x_1_0.enable_tags(True)
+        self.qtgui_time_sink_x_1_0.set_trigger_mode(qtgui.TRIG_MODE_FREE, qtgui.TRIG_SLOPE_POS, 0.0, 0, 0, "")
+        self.qtgui_time_sink_x_1_0.enable_autoscale(False)
+        self.qtgui_time_sink_x_1_0.enable_grid(False)
+        self.qtgui_time_sink_x_1_0.enable_axis_labels(True)
+        self.qtgui_time_sink_x_1_0.enable_control_panel(False)
+        self.qtgui_time_sink_x_1_0.enable_stem_plot(False)
+
+
+        labels = ['Signal 1', 'Signal 2', 'Signal 3', 'Signal 4', 'Signal 5',
+            'Signal 6', 'Signal 7', 'Signal 8', 'Signal 9', 'Signal 10']
+        widths = [1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1]
+        colors = ['blue', 'red', 'green', 'black', 'cyan',
+            'magenta', 'yellow', 'dark red', 'dark green', 'dark blue']
+        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0, 1.0]
+        styles = [1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1]
+        markers = [-1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1]
+
+
+        for i in range(2):
+            if len(labels[i]) == 0:
+                if (i % 2 == 0):
+                    self.qtgui_time_sink_x_1_0.set_line_label(i, "Re{{Data {0}}}".format(i/2))
+                else:
+                    self.qtgui_time_sink_x_1_0.set_line_label(i, "Im{{Data {0}}}".format(i/2))
+            else:
+                self.qtgui_time_sink_x_1_0.set_line_label(i, labels[i])
+            self.qtgui_time_sink_x_1_0.set_line_width(i, widths[i])
+            self.qtgui_time_sink_x_1_0.set_line_color(i, colors[i])
+            self.qtgui_time_sink_x_1_0.set_line_style(i, styles[i])
+            self.qtgui_time_sink_x_1_0.set_line_marker(i, markers[i])
+            self.qtgui_time_sink_x_1_0.set_line_alpha(i, alphas[i])
+
+        self._qtgui_time_sink_x_1_0_win = sip.wrapinstance(self.qtgui_time_sink_x_1_0.qwidget(), Qt.QWidget)
+        self.top_layout.addWidget(self._qtgui_time_sink_x_1_0_win)
+        self.qtgui_time_sink_x_1 = qtgui.time_sink_c(
+            11000, #size
+            samp_rate, #samp_rate
+            "post sync long", #name
             1, #number of inputs
             None # parent
         )
@@ -227,7 +301,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self.qtgui_time_sink_x_0_0 = qtgui.time_sink_f(
             (int((stop_time - start_time) * samp_rate) - 8), #size
             samp_rate, #samp_rate
-            "", #name
+            "autocorrelation", #name
             1, #number of inputs
             None # parent
         )
@@ -290,40 +364,19 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self.top_layout.addWidget(self._lo_offset_tool_bar)
         self.ieee802_11_sync_short_0 = ieee802_11.sync_short(0.56, 2, False, False)
         self.ieee802_11_sync_long_0 = ieee802_11.sync_long(sync_length, False, False)
-        self._gain_range = Range(0, 1, 0.01, 0.75, 200)
-        self._gain_win = RangeWidget(self._gain_range, self.set_gain, "'gain'", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.ieee802_11_frame_equalizer_0 = ieee802_11.frame_equalizer(ieee802_11.Equalizer(chan_est), freq, samp_rate, True, False)
+        self.ieee802_11_decode_mac_0 = ieee802_11.decode_mac(False, False)
+        self._gain_range = qtgui.Range(0, 1, 0.01, 0.75, 200)
+        self._gain_win = qtgui.RangeWidget(self._gain_range, self.set_gain, "'gain'", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._gain_win)
         self.freq_xlating_fir_filter_xxx_0 = filter.freq_xlating_fir_filter_ccc((int(input_samp_rate/samp_rate)), firdes.low_pass(1, input_samp_rate, filter_cutoff, filter_transition), (freq - sdr_center_freq), input_samp_rate)
-        # Create the options list
-        self._chan_est_options = [0, 1, 2, 3]
-        # Create the labels list
-        self._chan_est_labels = ['LS', 'LMS', 'Linear Comb', 'STA']
-        # Create the combo box
-        # Create the radio buttons
-        self._chan_est_group_box = Qt.QGroupBox("'chan_est'" + ": ")
-        self._chan_est_box = Qt.QHBoxLayout()
-        class variable_chooser_button_group(Qt.QButtonGroup):
-            def __init__(self, parent=None):
-                Qt.QButtonGroup.__init__(self, parent)
-            @pyqtSlot(int)
-            def updateButtonChecked(self, button_id):
-                self.button(button_id).setChecked(True)
-        self._chan_est_button_group = variable_chooser_button_group()
-        self._chan_est_group_box.setLayout(self._chan_est_box)
-        for i, _label in enumerate(self._chan_est_labels):
-            radio_button = Qt.QRadioButton(_label)
-            self._chan_est_box.addWidget(radio_button)
-            self._chan_est_button_group.addButton(radio_button, i)
-        self._chan_est_callback = lambda i: Qt.QMetaObject.invokeMethod(self._chan_est_button_group, "updateButtonChecked", Qt.Q_ARG("int", self._chan_est_options.index(i)))
-        self._chan_est_callback(self.chan_est)
-        self._chan_est_button_group.buttonClicked[int].connect(
-            lambda i: self.set_chan_est(self._chan_est_options[i]))
-        self.top_layout.addWidget(self._chan_est_group_box)
+        self.fft_vxx_0 = fft.fft_vcc(int(num_ofdm_subcarriers), True, window.rectangular(32), True, 1)
         self.blocks_throttle_0 = blocks.throttle(gr.sizeof_gr_complex*1, input_samp_rate,True)
+        self.blocks_stream_to_vector_0 = blocks.stream_to_vector(gr.sizeof_gr_complex*1, int(num_ofdm_subcarriers))
         self.blocks_multiply_xx_0 = blocks.multiply_vcc(1)
         self.blocks_moving_average_xx_1 = blocks.moving_average_cc(window_size, 1, 4000, 1)
         self.blocks_moving_average_xx_0 = blocks.moving_average_ff((window_size  + additional_window_size), 1, 4000, 1)
-        self.blocks_file_source_0 = blocks.file_source(gr.sizeof_gr_complex*1, '/home/irongiant/Documents/gr-halow/captures/halow-capture-1mhz-mcs0.sigmf-data', False, (int(start_time * input_samp_rate)), (int((stop_time - start_time) * input_samp_rate)))
+        self.blocks_file_source_0 = blocks.file_source(gr.sizeof_gr_complex*1, '/home/dragon/Documents/gr-halow/captures/halow-capture-1mhz-mcs0.sigmf-data', False, (int(start_time * input_samp_rate)), (int((stop_time - start_time) * input_samp_rate)))
         self.blocks_file_source_0.set_begin_tag(pmt.PMT_NIL)
         self.blocks_divide_xx_0 = blocks.divide_ff(1)
         self.blocks_delay_0_0 = blocks.delay(gr.sizeof_gr_complex*1, additional_window_size)
@@ -337,26 +390,31 @@ class halow_rx(gr.top_block, Qt.QWidget):
         # Connections
         ##################################################
         self.connect((self.blocks_complex_to_mag_0, 0), (self.blocks_divide_xx_0, 0))
-        self.connect((self.blocks_complex_to_mag_0, 0), (self.ieee802_11_sync_short_0, 2))
         self.connect((self.blocks_complex_to_mag_squared_0, 0), (self.blocks_moving_average_xx_0, 0))
         self.connect((self.blocks_conjugate_cc_0, 0), (self.blocks_multiply_xx_0, 1))
-        self.connect((self.blocks_delay_0, 0), (self.ieee802_11_sync_long_0, 0))
+        self.connect((self.blocks_delay_0, 0), (self.ieee802_11_sync_long_0, 1))
         self.connect((self.blocks_delay_0_0, 0), (self.blocks_conjugate_cc_0, 0))
         self.connect((self.blocks_delay_0_0, 0), (self.ieee802_11_sync_short_0, 0))
+        self.connect((self.blocks_divide_xx_0, 0), (self.ieee802_11_sync_short_0, 2))
         self.connect((self.blocks_divide_xx_0, 0), (self.qtgui_time_sink_x_0_0, 0))
         self.connect((self.blocks_file_source_0, 0), (self.blocks_throttle_0, 0))
         self.connect((self.blocks_moving_average_xx_0, 0), (self.blocks_divide_xx_0, 1))
         self.connect((self.blocks_moving_average_xx_1, 0), (self.blocks_complex_to_mag_0, 0))
         self.connect((self.blocks_moving_average_xx_1, 0), (self.ieee802_11_sync_short_0, 1))
         self.connect((self.blocks_multiply_xx_0, 0), (self.blocks_moving_average_xx_1, 0))
+        self.connect((self.blocks_stream_to_vector_0, 0), (self.fft_vxx_0, 0))
         self.connect((self.blocks_throttle_0, 0), (self.freq_xlating_fir_filter_xxx_0, 0))
+        self.connect((self.fft_vxx_0, 0), (self.ieee802_11_frame_equalizer_0, 0))
         self.connect((self.freq_xlating_fir_filter_xxx_0, 0), (self.blocks_complex_to_mag_squared_0, 0))
         self.connect((self.freq_xlating_fir_filter_xxx_0, 0), (self.blocks_delay_0_0, 0))
         self.connect((self.freq_xlating_fir_filter_xxx_0, 0), (self.blocks_multiply_xx_0, 0))
         self.connect((self.freq_xlating_fir_filter_xxx_0, 0), (self.qtgui_time_sink_x_2, 0))
+        self.connect((self.ieee802_11_frame_equalizer_0, 0), (self.ieee802_11_decode_mac_0, 0))
+        self.connect((self.ieee802_11_sync_long_0, 0), (self.blocks_stream_to_vector_0, 0))
         self.connect((self.ieee802_11_sync_long_0, 0), (self.qtgui_time_sink_x_1, 0))
         self.connect((self.ieee802_11_sync_short_0, 0), (self.blocks_delay_0, 0))
-        self.connect((self.ieee802_11_sync_short_0, 0), (self.ieee802_11_sync_long_0, 1))
+        self.connect((self.ieee802_11_sync_short_0, 0), (self.ieee802_11_sync_long_0, 0))
+        self.connect((self.ieee802_11_sync_short_0, 0), (self.qtgui_time_sink_x_1_0, 0))
 
 
     def closeEvent(self, event):
@@ -374,8 +432,10 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self.samp_rate = samp_rate
         self.set_filter_cutoff((self.samp_rate / 2) + (self.samp_rate /10))
         self._samp_rate_callback(self.samp_rate)
+        self.ieee802_11_frame_equalizer_0.set_bandwidth(self.samp_rate)
         self.qtgui_time_sink_x_0_0.set_samp_rate(self.samp_rate)
         self.qtgui_time_sink_x_1.set_samp_rate(self.samp_rate)
+        self.qtgui_time_sink_x_1_0.set_samp_rate(self.samp_rate)
         self.qtgui_time_sink_x_2.set_samp_rate(self.samp_rate)
 
     def get_window_size(self):
@@ -446,6 +506,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self.freq = freq
         self._freq_callback(self.freq)
         self.freq_xlating_fir_filter_xxx_0.set_center_freq((self.freq - self.sdr_center_freq))
+        self.ieee802_11_frame_equalizer_0.set_frequency(self.freq)
 
     def get_filter_transition(self):
         return self.filter_transition
@@ -467,6 +528,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
     def set_chan_est(self, chan_est):
         self.chan_est = chan_est
         self._chan_est_callback(self.chan_est)
+        self.ieee802_11_frame_equalizer_0.set_algorithm(ieee802_11.Equalizer(self.chan_est))
 
     def get_additional_window_size(self):
         return self.additional_window_size
@@ -481,9 +543,6 @@ class halow_rx(gr.top_block, Qt.QWidget):
 
 def main(top_block_cls=halow_rx, options=None):
 
-    if StrictVersion("4.5.0") <= StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
-        style = gr.prefs().get_string('qtgui', 'style', 'raster')
-        Qt.QApplication.setGraphicsSystem(style)
     qapp = Qt.QApplication(sys.argv)
 
     tb = top_block_cls()

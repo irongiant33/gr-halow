@@ -4,6 +4,8 @@
 - [visual verification of subcarriers](#visual-verification-of-number-of-ofdm-subcarriers-in-halow)
 - [ieee standards breakdown](#ieee-standards-breakdown)
 - [wifi synchronization](#wifi-synchronization)
+- [wifi frame equalization](#wifi-frame-equalization)
+- [wifi mac decoding](#wifi-mac-decoding)
 - [misc resources](#misc-resources)
 - [todo](#todo)
 
@@ -182,6 +184,34 @@ Service field is 16 bits, PSDU varies depending on the data you want to send, th
 
 the above image was from commit `25a4858795a04dd1569dcee04be4bb9633dc4705` on gr-halow and `ef66318257fdfba0914792cbccbcf6e319b918e1` on modified fork of gr-ieee80211. You can see the bottom output from the autocorrelation part in the gnu radio flowgraph synchronizes roughly to the beginning of frame but we still don't have any output from wifi sync long.
 
+This is partly due to the fact that for some reason when gr-ieee80211 is rebuilt, it sometimes reconnects the flowgraph in the wrong spots. It will mess up the inputs to both wifi_sync_short and wifi_sync_long, so you have to make sure they are routing to the right spots.
+
+Secondly, I was able to update the LONG FIR filter kernel in sync_long_impl.cc using `utils/create_long_halow.R` within gr-ieee80211. Using this, I was able to produce the following sync output:
+
+![sync-plots2.png](media/sync-plots2.png)
+
+I also captured [sync-plots.png](media/sync-plots.png) but there are multiple tags which I believe is from the wrong kernel convolving over the WiFi samples. WiFi sync short and WiFi sync long are decimating blocks, but they do not decimate linearly; it is based on whether the threshold is exceeded in the autocorrelation phase, so I just guessed & refined my guesses for how many samples the plot should show. I knew 4 frames needed to appear so that is what we see in the plots. There is also a clean tag at the start of each frame which lets me know that we are likely good to go to the next phase of the processing stream.
+
+## WiFi Frame Equalization
+
+The role of frame equalization is to correct for the frequency offset detected in the synchronization step and to also normalize the power on each of the data subcarriers so that the IQ constellation can be sliced and turned into binary data. 
+
+For the purpose of HaLow, we focus on modification of the least squares equalizer (LS) in `lib/equalizer/ls.cc`. Using this information, we can then decode the SIG field of HaLow to determine various information shown below:
+
+![signal field description](media/sig-field-description.png)
+
+Even though HaLow has 24 data subcarriers, the scheme used for MCS0 is BPSK 1/2 coding 2x repetition. This means out of 24 bits in each symbol, there are two repetitions of 12 bits. In those 12 bit repetitions, only 6 bits are data and the other 6 bits are the FEC.
+
+In my implementation of the SIG field decoding, I only pull out the 4 bit MCS index and output it to the log. I got the following capture from enabling the log on WiFi Decode MAC in GNU Radio:
+
+![frame equalizer log](media/frame-equalizer-log.png)
+
+It might not look like much, but what I find important here is the fact there are 4 triggers which corresponds with the 4 frames that we detected. Furthermore, each of these triggers are consistent with the encoding scheme - 0, i.e. MCS 0. Other interesting fields in SIG are bits 12-20 in the 3rd and 4th symbol. These bits correspond to the length of the PSDU. Bits 26-29 of the 5th SIG OFDM symbol correspond to the CRC which is verified in the next step, [WiFi MAC decoding](#wifi-mac-decoding)
+
+## WiFi MAC Decoding
+
+
+
 ## Misc Resources
 
 - Wi-Fi HaLow breakdown and performance results by Troy Martin (MARCH 2024): [https://youtu.be/oFVj1RES9TU?si=XjW0Y5oUUU09URXw](https://youtu.be/oFVj1RES9TU?si=XjW0Y5oUUU09URXw)
@@ -192,6 +222,7 @@ ofdm is like threading in RF. fdm is multiprocessing. It lowers the rate of each
 
 ## Todo (priority order)
 
+- [ ] now that you have WiFi Frame Equalizer working, can you decode other MCS? The key assumption here would be that BPSK 1/2 with 2x repetition is used for the SIG field for all MCS.
 - [ ] try using gr-ieee80211 for some of the standard channels? It might possibly recognize the data, just in a different band. break out gr-ieee80211 to see if you can get anything to make sense. It might not work end-to-end, but it could serve as a good basis.
     - started to break this out and have it in the `halow_rx.grc` flowgraph. When I enable/disable some of the logging, it seems that the receive chain recognizes the packets and demodulation but likely does not recognize the MAC. Nothing makes sense in Wireshark or the "WiFi Decode MAC" block. The checksum keeps dropping, but it is getting full packets.
     - [ ] p.4170 has some interesting time domain representation tables. Is this where the fixed 64 size complex FIR filter kernel comes from in the `sync_long_impl.cc`?
