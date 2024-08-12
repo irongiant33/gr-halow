@@ -635,7 +635,7 @@ blocks:
     nthreads: '1'
     shift: 'True'
     type: complex
-    window: window.rectangular(32)
+    window: window.rectangular(int(num_ofdm_subcarriers))
   states:
     bus_sink: false
     bus_source: false
@@ -705,9 +705,9 @@ blocks:
     alias: ''
     bw: samp_rate
     comment: ''
-    debug: 'False'
+    debug: 'True'
     freq: freq
-    log: 'True'
+    log: 'False'
     maxoutbuf: '0'
     minoutbuf: '0'
   states:
@@ -802,7 +802,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [768, 908.0]
+    coordinate: [784, 916.0]
     rotation: 180
     state: disabled
 - name: qtgui_const_sink_x_0
@@ -894,7 +894,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [488, 876.0]
+    coordinate: [504, 916.0]
     rotation: 180
     state: disabled
 - name: qtgui_time_sink_x_0

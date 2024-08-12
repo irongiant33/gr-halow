@@ -222,7 +222,9 @@ ofdm is like threading in RF. fdm is multiprocessing. It lowers the rate of each
 
 ## Todo (priority order)
 
+- [ ] fix compile error in the wifi frame equalizer, print out the different fields of the SIG field rather than its bit representation so you can visually compare the repetitions. Fix your synchronization until these values make sense.
 - [ ] now that you have WiFi Frame Equalizer working, can you decode other MCS? The key assumption here would be that BPSK 1/2 with 2x repetition is used for the SIG field for all MCS.
+- [ ] change the rest of ofdm_param and frame_param classes in `utils.cc` to match HaLow values. So far you only changed BPSK1_2.
 - [ ] try using gr-ieee80211 for some of the standard channels? It might possibly recognize the data, just in a different band. break out gr-ieee80211 to see if you can get anything to make sense. It might not work end-to-end, but it could serve as a good basis.
     - started to break this out and have it in the `halow_rx.grc` flowgraph. When I enable/disable some of the logging, it seems that the receive chain recognizes the packets and demodulation but likely does not recognize the MAC. Nothing makes sense in Wireshark or the "WiFi Decode MAC" block. The checksum keeps dropping, but it is getting full packets.
     - [ ] p.4170 has some interesting time domain representation tables. Is this where the fixed 64 size complex FIR filter kernel comes from in the `sync_long_impl.cc`?
