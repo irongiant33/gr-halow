@@ -403,7 +403,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [848, 684.0]
+    coordinate: [840, 692.0]
     rotation: 0
     state: enabled
 - name: blocks_delay_0_0
@@ -1185,7 +1185,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1504, 508.0]
+    coordinate: [1376, 468.0]
     rotation: 0
     state: enabled
 - name: qtgui_time_sink_x_1_0

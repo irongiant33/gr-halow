@@ -222,7 +222,9 @@ ofdm is like threading in RF. fdm is multiprocessing. It lowers the rate of each
 
 ## Todo (priority order)
 
-- [ ] fix compile error in the wifi frame equalizer, print out the different fields of the SIG field rather than its bit representation so you can visually compare the repetitions. Fix your synchronization until these values make sense.
+- [ ] section 23.3.9.5 p.3251 states "repetition for 1 MHz MCS 10. There are 12 data bits followed by the same 12 data bits repeated, but those repeated 12 data bits are first XORed by the sequence `s=[1 0 0 0 0 1 0 1 0 1 1 1]`. After this, the bits are sent to the BCC interleaver (if BCC encoded) or the LDPC interleaver (if LDPC encoded). I think this just applies to MCS 10 data though, not the MCS 10 SIG field.
+- [ ] EQN 23-57 on p.3258 looks a lot like the S1G_SHORT equation 23-55 on the same page. Does this mean you should only be taking the output of SYNC_SHORT? 
+- [ ] how to decode since viterbi is not used for halow. binary convolutional code (BCC) or LDPC is used. How to do this for the SIG field that "is BCC encoded at rate R=1/2" p.3247
 - [ ] now that you have WiFi Frame Equalizer working, can you decode other MCS? The key assumption here would be that BPSK 1/2 with 2x repetition is used for the SIG field for all MCS.
 - [ ] change the rest of ofdm_param and frame_param classes in `utils.cc` to match HaLow values. So far you only changed BPSK1_2.
 - [ ] try using gr-ieee80211 for some of the standard channels? It might possibly recognize the data, just in a different band. break out gr-ieee80211 to see if you can get anything to make sense. It might not work end-to-end, but it could serve as a good basis.
@@ -265,6 +267,8 @@ ofdm is like threading in RF. fdm is multiprocessing. It lowers the rate of each
 - [ ] Range testing at this channel, propagation analysis model. While you are range testing, see if you can force the lowest number of spatial streams and the lowest MCS.
 - [ ] try adding attenuators or take HaLow-U at extended range to force lower MCS?
 - [ ] build energy detector and correlator that could identify active HaLow channels?
+- [x] fix compile error in the wifi frame equalizer, print out the different fields of the SIG field rather than its bit representation so you can visually compare the repetitions. Fix your synchronization until these values make sense.
+    - forgot to increase the size of `d_interleaved` in `frame_equalizer.h` to match the increased size of the array for decoding the HaLow SIG field - it requires 6 OFDM frames rather than just 1.
 - [x] the 1MHz interleaver is different, as shown in [1mhz interleaver](media/1mhz_interleaver.png). How do you implement the new one?
     - changes are in the gr-ieee802-11 lib/frame_equalizer_impl.cc file. Essentially, I just had to create a matrix with 3 rows, 8 columns where the index incremented from 1 to 23 (i.e. covering all 24 data subcarriers) starting in the first row, first column, going down the column, and starting over in the 0th row next column.
     - BPSCS is the number of coded bits per single carrier for each spatial stream. For BPSK, this is 1 but you can find all these values in Table 23-41 for 1 MHz.
