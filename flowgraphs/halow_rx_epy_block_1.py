@@ -1,31 +1,19 @@
-"""
-Embedded Python Blocks:
-
-Each time this file is saved, GRC will instantiate the first class it finds
-to get ports and parameters of your block. The arguments to __init__  will
-be the parameters. All of them are required to have default values!
-"""
-
 import numpy as np
 from gnuradio import gr
 import pmt
 import json
 
-LOITER_TIME = 0.5 # in seconds
-
-class blk(gr.sync_block):  # other base classes are basic_block, decim_block, interp_block
+class blk(gr.sync_block): 
     """Embedded Python Block example - a simple multiply const"""
 
-    def __init__(self, sdr_center_freq=902e6, sdr_samp_rate=10e6, samp_rate=1e6, halow_channel_json_filename="/home/dragon/Documents/gr-halow/flowgraphs/halow_channels.json"):  # only default arguments here
+    def __init__(self, loiter_time=2, sdr_center_freq=902e6, sdr_samp_rate=10e6, samp_rate=1e6, halow_channel_json_filename="/home/dragon/Documents/gr-halow/flowgraphs/halow_channels.json"):
         """arguments to this function show up as parameters in GRC"""
         gr.sync_block.__init__(
             self,
-            name='HaLow Scan Controller',   # will show up in GRC
+            name='HaLow Scan Controller', 
             in_sig=[np.complex64],
             out_sig=[np.complex64]
         )
-        # if an attribute with the same name as a parameter is found,
-        # a callback is registered (properties work, too).
         self.halow_channel_json_filename = halow_channel_json_filename
         json_file = open(self.halow_channel_json_filename)
         self.sdr_center_freq = sdr_center_freq
@@ -39,7 +27,7 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         json_file.close()
         self.available_halow_channels = []
         self.channel_index = 0
-        self.loiter_samples = int(LOITER_TIME * samp_rate) # how many samples to read before switching channels
+        self.loiter_samples = int(loiter_time * samp_rate) # how many samples to read before switching channels
         self.sample_count = 0
         self.freq_message = None
         self.tune_message = None
@@ -70,8 +58,6 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
         if(search_lowerbound < radio_lowerbound):
             search_lowerbound = radio_lowerbound
 
-        print(f"search lowerbound {search_lowerbound}")
-        print(f"radio upperbound {radio_upperbound}")
         # find first channel miss
         while(first_channel_miss is None):
             for channel, value in self.all_halow_channels.items():
@@ -85,12 +71,10 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
                         first_channel_miss = (channel, value)
             # wraparound condition
             if(first_channel_miss is None and count < 1):
-                print("missed...looping back")
                 search_lowerbound = 902e6 # lowest edge of ISM band
                 radio_upperbound = 901e6 # 1MHz lower than lowest edge of ISM band
                 count = count + 1
             elif(first_channel_miss is None and count >= 1):
-                print("SDR sample rate not high enough to capture any HaLow channels! Must be at least 1 MHz")
                 return self.sdr_center_freq
         
         new_tuning_freq = (self.sdr_samp_rate / 2) + (first_channel_miss[1]["freq"] - first_channel_miss[1]["bw"] / 2)
@@ -120,10 +104,8 @@ class blk(gr.sync_block):  # other base classes are basic_block, decim_block, in
             if(self.channel_index >= len(self.available_halow_channels)):
                 self.channel_index = 0
                 next_tuning_freq = self.find_next_tuning_freq()
-                print(f"changing tuning freq to {next_tuning_freq}")
                 self.set_tune_message(next_tuning_freq)
             if(len(self.available_halow_channels) > 0):
-                print(f"changing channels to {self.available_halow_channels[self.channel_index]}")
                 self.set_freq_message(self.available_halow_channels[self.channel_index][1]["freq"] - self.sdr_center_freq)
 
         # control FIR filter and tuner
