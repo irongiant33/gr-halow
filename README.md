@@ -7,8 +7,8 @@ gr-halow is a first-of-its-kind implementation of IEEE 802.11ah Wi-Fi HaLow in G
 **Contents**
 - [What is HaLow?](#what-is-halow)
 - [How Do I Use It?](#how-do-i-use-it)
-    - [HaLow Activity Scan](#halow-activity-scan)
 - [Applications](#applications)
+    - [Scanning for HaLow Networks](#scanning-for-halow-networks)
 - [Resources](#resources)
 
 ## What is HaLow?
