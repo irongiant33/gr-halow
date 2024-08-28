@@ -188,7 +188,7 @@ blocks:
   id: variable
   parameters:
     comment: in seconds, 1mhz_mcs0 capture
-    value: '''/home/dragon/Documents/gr-halow/flowgraphs/1mhz_halow_channels.json'''
+    value: '''/home/irongiant/Documents/gr-halow/flowgraphs/1mhz_halow_channels.json'''
   states:
     bus_sink: false
     bus_source: false
@@ -447,7 +447,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1368, 836.0]
+    coordinate: [1328, 832.0]
     rotation: 0
     state: enabled
 - name: blocks_divide_xx_0
@@ -614,16 +614,17 @@ blocks:
   id: epy_block
   parameters:
     _source_code: "import numpy as np\nfrom gnuradio import gr\nimport pmt\nimport\
-      \ json\n\nclass blk(gr.sync_block):  \n\n\n    def __init__(self, upper_detection_threshold=0.2,\
-      \ halow_channel_json_filename=\"/home/dragon/Documents/gr-halow/flowgraphs/halow_channels.json\"\
-      ): \n        \"\"\"arguments to this function show up as parameters in GRC\"\
-      \"\"\n        gr.sync_block.__init__(\n            self,\n            name='HaLow\
-      \ Usage Detector',  \n            in_sig=[np.complex64],\n            out_sig=[np.complex64]\n\
+      \ json\nimport os\n\nclass blk(gr.sync_block):  \n\n\n    def __init__(self,\
+      \ upper_detection_threshold=0.2, halow_channel_json_filename=\"\"): \n     \
+      \   \"\"\"arguments to this function show up as parameters in GRC\"\"\"\n  \
+      \      gr.sync_block.__init__(\n            self,\n            name='HaLow Usage\
+      \ Detector',  \n            in_sig=[np.complex64],\n            out_sig=[np.complex64]\n\
       \        )\n        self.upper_detection_threshold = upper_detection_threshold\n\
       \        self.halow_channel_json_filename = halow_channel_json_filename\n  \
-      \      json_file = open(self.halow_channel_json_filename)\n        self.all_halow_channels\
-      \ = json.load(json_file)\n        json_file.close()\n        self.port_freq_in\
-      \ = \"freq_in\"\n        self.message_port_register_in(pmt.intern(self.port_freq_in))\n\
+      \      self.all_halow_channels = {}\n        if(os.path.isfile(halow_channel_json_filename)):\n\
+      \            json_file = open(self.halow_channel_json_filename)\n          \
+      \  self.all_halow_channels = json.load(json_file)\n            json_file.close()\n\
+      \        self.port_freq_in = \"freq_in\"\n        self.message_port_register_in(pmt.intern(self.port_freq_in))\n\
       \        self.set_msg_handler(pmt.intern(self.port_freq_in), self.handle_freq_in)\n\
       \        self.port_tune_in = \"tune_in\"\n        self.message_port_register_in(pmt.intern(self.port_tune_in))\n\
       \        self.set_msg_handler(pmt.intern(self.port_tune_in), self.handle_tune_in)\n\
@@ -656,10 +657,9 @@ blocks:
     upper_detection_threshold: '0.1'
   states:
     _io_cache: ('HaLow Usage Detector', 'blk', [('upper_detection_threshold', '0.2'),
-      ('halow_channel_json_filename', "'/home/dragon/Documents/gr-halow/flowgraphs/halow_channels.json'")],
-      [('0', 'complex', 1), ('freq_in', 'message', 1), ('tune_in', 'message', 1)],
-      [('0', 'complex', 1)], 'arguments to this function show up as parameters in
-      GRC', ['halow_channel_json_filename', 'upper_detection_threshold'])
+      ('halow_channel_json_filename', "''")], [('0', 'complex', 1), ('tune_in', 'message',
+      1), ('freq_in', 'message', 1)], [('0', 'complex', 1)], 'arguments to this function
+      show up as parameters in GRC', ['halow_channel_json_filename', 'upper_detection_threshold'])
     bus_sink: false
     bus_source: false
     bus_structure: null
@@ -670,52 +670,54 @@ blocks:
   id: epy_block
   parameters:
     _source_code: "import numpy as np\nfrom gnuradio import gr\nimport pmt\nimport\
-      \ json\n\nclass blk(gr.sync_block): \n    \"\"\"Embedded Python Block example\
-      \ - a simple multiply const\"\"\"\n\n    def __init__(self, loiter_time=2, sdr_center_freq=902e6,\
-      \ sdr_samp_rate=10e6, samp_rate=1e6, halow_channel_json_filename=\"/home/dragon/Documents/gr-halow/flowgraphs/halow_channels.json\"\
-      ):\n        \"\"\"arguments to this function show up as parameters in GRC\"\"\
-      \"\n        gr.sync_block.__init__(\n            self,\n            name='HaLow\
+      \ json\nimport os\n\nclass blk(gr.sync_block): \n    \"\"\"Embedded Python Block\
+      \ example - a simple multiply const\"\"\"\n\n    def __init__(self, loiter_time=2,\
+      \ sdr_center_freq=902e6, sdr_samp_rate=10e6, samp_rate=1e6, halow_channel_json_filename=\"\
+      \"):\n        \"\"\"arguments to this function show up as parameters in GRC\"\
+      \"\"\n        gr.sync_block.__init__(\n            self,\n            name='HaLow\
       \ Scan Controller', \n            in_sig=[np.complex64],\n            out_sig=[np.complex64]\n\
       \        )\n        self.halow_channel_json_filename = halow_channel_json_filename\n\
-      \        json_file = open(self.halow_channel_json_filename)\n        self.sdr_center_freq\
-      \ = sdr_center_freq\n        self.samp_rate = samp_rate\n        self.sdr_samp_rate\
-      \ = sdr_samp_rate\n        self.all_halow_channels = json.load(json_file)\n\
-      \        self.port_freq_control = \"freq_control\"\n        self.port_tuning_control\
-      \ = \"tuning_control\"\n        self.message_port_register_out(pmt.intern(self.port_freq_control))\n\
+      \        self.all_halow_channels = {}\n        if(os.path.isfile(halow_channel_json_filename)):\n\
+      \            json_file = open(self.halow_channel_json_filename)\n          \
+      \  self.all_halow_channels = json.load(json_file)\n            json_file.close()\n\
+      \        self.sdr_center_freq = sdr_center_freq\n        self.samp_rate = samp_rate\n\
+      \        self.sdr_samp_rate = sdr_samp_rate\n        self.port_freq_control\
+      \ = \"freq_control\"\n        self.port_tuning_control = \"tuning_control\"\n\
+      \        self.message_port_register_out(pmt.intern(self.port_freq_control))\n\
       \        self.message_port_register_out(pmt.intern(self.port_tuning_control))\n\
-      \        json_file.close()\n        self.available_halow_channels = []\n   \
-      \     self.channel_index = 0\n        self.loiter_samples = int(loiter_time\
-      \ * samp_rate) # how many samples to read before switching channels\n      \
-      \  self.sample_count = 0\n        self.freq_message = None\n        self.tune_message\
-      \ = None\n\n        # first time setup operations\n        self.find_available_channels()\n\
-      \        freq_offset = 0 # initial offset of 0 unless there are available channels\n\
-      \        if(len(self.available_halow_channels) > 0):\n            freq_offset\
-      \ = self.available_halow_channels[self.channel_index][1][\"freq\"] - self.sdr_center_freq\n\
-      \        self.set_freq_message(freq_offset) # initial offset of 0\n\n    def\
-      \ find_available_channels(self):\n        self.available_halow_channels = []\n\
-      \        for channel, value in self.all_halow_channels.items():\n          \
-      \  channel_lowerbound = value[\"freq\"] - value[\"bw\"]/2\n            channel_upperbound\
-      \ = value[\"freq\"] + value[\"bw\"]/2\n            radio_lowerbound = self.sdr_center_freq\
-      \ - self.sdr_samp_rate / 2\n            radio_upperbound = self.sdr_center_freq\
-      \ + self.sdr_samp_rate / 2\n            if(channel_lowerbound >= radio_lowerbound\
-      \ and channel_upperbound <= radio_upperbound):\n                self.available_halow_channels.append((channel,\
-      \ value))\n\n    def find_next_tuning_freq(self):\n        radio_lowerbound\
-      \ = self.sdr_center_freq - self.sdr_samp_rate / 2\n        radio_upperbound\
-      \ = self.sdr_center_freq + self.sdr_samp_rate / 2\n        search_lowerbound\
-      \ = radio_upperbound - 4e6 # 4e6 because it is the maximum width of a HaLow\
-      \ channel that we care about\n        first_channel_miss = None # we will set\
-      \ the radio lowerbound so that it captures the first missed channel\n      \
-      \  count = 0 # ensures we don't have endless while loop\n        if(search_lowerbound\
-      \ < radio_lowerbound):\n            search_lowerbound = radio_lowerbound\n\n\
-      \        # find first channel miss\n        while(first_channel_miss is None):\n\
-      \            for channel, value in self.all_halow_channels.items():\n      \
-      \          # detect miss\n                right_of_search_lowerbound = value[\"\
-      freq\"] >= search_lowerbound\n                outside_current_range      = radio_upperbound\
-      \ < (value[\"freq\"] + value[\"bw\"]/2)\n                sdr_can_capture   \
-      \         = value[\"bw\"] <= self.sdr_samp_rate\n                if(right_of_search_lowerbound\
-      \ and outside_current_range and sdr_can_capture):\n                    # new\
-      \ lowest miss\n                    if(first_channel_miss is None or value[\"\
-      freq\"] < first_channel_miss[1][\"freq\"]):\n                        first_channel_miss\
+      \        self.available_halow_channels = []\n        self.channel_index = 0\n\
+      \        self.loiter_samples = int(loiter_time * samp_rate) # how many samples\
+      \ to read before switching channels\n        self.sample_count = 0\n       \
+      \ self.freq_message = None\n        self.tune_message = None\n\n        # first\
+      \ time setup operations\n        self.find_available_channels()\n        freq_offset\
+      \ = 0 # initial offset of 0 unless there are available channels\n        if(len(self.available_halow_channels)\
+      \ > 0):\n            freq_offset = self.available_halow_channels[self.channel_index][1][\"\
+      freq\"] - self.sdr_center_freq\n        self.set_freq_message(freq_offset) #\
+      \ initial offset of 0\n\n    def find_available_channels(self):\n        self.available_halow_channels\
+      \ = []\n        for channel, value in self.all_halow_channels.items():\n   \
+      \         channel_lowerbound = value[\"freq\"] - value[\"bw\"]/2\n         \
+      \   channel_upperbound = value[\"freq\"] + value[\"bw\"]/2\n            radio_lowerbound\
+      \ = self.sdr_center_freq - self.sdr_samp_rate / 2\n            radio_upperbound\
+      \ = self.sdr_center_freq + self.sdr_samp_rate / 2\n            if(channel_lowerbound\
+      \ >= radio_lowerbound and channel_upperbound <= radio_upperbound):\n       \
+      \         self.available_halow_channels.append((channel, value))\n\n    def\
+      \ find_next_tuning_freq(self):\n        radio_lowerbound = self.sdr_center_freq\
+      \ - self.sdr_samp_rate / 2\n        radio_upperbound = self.sdr_center_freq\
+      \ + self.sdr_samp_rate / 2\n        search_lowerbound = radio_upperbound - 4e6\
+      \ # 4e6 because it is the maximum width of a HaLow channel that we care about\n\
+      \        first_channel_miss = None # we will set the radio lowerbound so that\
+      \ it captures the first missed channel\n        count = 0 # ensures we don't\
+      \ have endless while loop\n        if(search_lowerbound < radio_lowerbound):\n\
+      \            search_lowerbound = radio_lowerbound\n\n        # find first channel\
+      \ miss\n        while(first_channel_miss is None):\n            for channel,\
+      \ value in self.all_halow_channels.items():\n                # detect miss\n\
+      \                right_of_search_lowerbound = value[\"freq\"] >= search_lowerbound\n\
+      \                outside_current_range      = radio_upperbound < (value[\"freq\"\
+      ] + value[\"bw\"]/2)\n                sdr_can_capture            = value[\"\
+      bw\"] <= self.sdr_samp_rate\n                if(right_of_search_lowerbound and\
+      \ outside_current_range and sdr_can_capture):\n                    # new lowest\
+      \ miss\n                    if(first_channel_miss is None or value[\"freq\"\
+      ] < first_channel_miss[1][\"freq\"]):\n                        first_channel_miss\
       \ = (channel, value)\n            # wraparound condition\n            if(first_channel_miss\
       \ is None and count < 1):\n                search_lowerbound = 902e6 # lowest\
       \ edge of ISM band\n                radio_upperbound = 901e6 # 1MHz lower than\
@@ -748,7 +750,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    halow_channel_json_filename: '''/home/dragon/Documents/gr-halow/flowgraphs/halow_channels.json'''
+    halow_channel_json_filename: halow_channel_json_filename
     loiter_time: '0.5'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -758,10 +760,10 @@ blocks:
   states:
     _io_cache: ('HaLow Scan Controller', 'blk', [('loiter_time', '2'), ('sdr_center_freq',
       '902000000.0'), ('sdr_samp_rate', '10000000.0'), ('samp_rate', '1000000.0'),
-      ('halow_channel_json_filename', "'/home/dragon/Documents/gr-halow/flowgraphs/halow_channels.json'")],
-      [('0', 'complex', 1)], [('0', 'complex', 1), ('tuning_control', 'message', 1),
-      ('freq_control', 'message', 1)], 'Embedded Python Block example - a simple multiply
-      const', ['halow_channel_json_filename', 'samp_rate', 'sdr_center_freq', 'sdr_samp_rate'])
+      ('halow_channel_json_filename', "''")], [('0', 'complex', 1)], [('0', 'complex',
+      1), ('tuning_control', 'message', 1), ('freq_control', 'message', 1)], 'Embedded
+      Python Block example - a simple multiply const', ['halow_channel_json_filename',
+      'samp_rate', 'sdr_center_freq', 'sdr_samp_rate'])
     bus_sink: false
     bus_source: false
     bus_structure: null
@@ -1351,7 +1353,7 @@ blocks:
     agc0: 'False'
     agc1: 'False'
     alias: ''
-    antenna0: RX
+    antenna0: TX/RX
     antenna1: ''
     bandwidth0: '0'
     bandwidth1: '0'
@@ -1363,7 +1365,7 @@ blocks:
     dc_removal0: 'False'
     dc_removal1: 'True'
     dev_args: ''
-    driver: airspy
+    driver: hackrf
     freq_correction0: '0'
     freq_correction1: '0'
     gain0: '10'
@@ -1412,7 +1414,6 @@ connections:
 - [epy_block_1, '0', qtgui_time_sink_x_2, '0']
 - [epy_block_1, freq_control, epy_block_0, freq_in]
 - [epy_block_1, freq_control, freq_xlating_fir_filter_xxx_0, freq]
-- [epy_block_1, tuning_control, epy_block_0, tune_in]
 - [epy_block_1, tuning_control, soapy_custom_source_0, cmd]
 - [foo_wireshark_connector_0, '0', blocks_file_sink_0, '0']
 - [freq_xlating_fir_filter_xxx_0, '0', blocks_tag_gate_0, '0']
@@ -1424,4 +1425,4 @@ connections:
 
 metadata:
   file_format: 1
-  grc_version: 3.10.10.0
+  grc_version: 3.10.9.2

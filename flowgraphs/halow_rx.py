@@ -6,7 +6,7 @@
 #
 # GNU Radio Python Flow Graph
 # Title: Halow Rx
-# GNU Radio version: 3.10.10.0
+# GNU Radio version: 3.10.9.2
 
 from PyQt5 import Qt
 from gnuradio import qtgui
@@ -78,7 +78,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self.num_ofdm_subcarriers = num_ofdm_subcarriers = 32
         self.lpf_taps = lpf_taps = firdes.low_pass(1, input_samp_rate, filter_cutoff, filter_transition)
         self.lo_offset = lo_offset = 0
-        self.halow_channel_json_filename = halow_channel_json_filename = '/home/dragon/Documents/gr-halow/flowgraphs/1mhz_halow_channels.json'
+        self.halow_channel_json_filename = halow_channel_json_filename = '/home/irongiant/Documents/gr-halow/flowgraphs/1mhz_halow_channels.json'
         self.gain = gain = 0.75
         self.freq = freq = 920.5e6
         self.chan_est = chan_est = 0
@@ -124,7 +124,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
         # Create the radio buttons
         self.top_layout.addWidget(self._freq_tool_bar)
         self.soapy_custom_source_0 = None
-        dev = 'driver=' + 'airspy'
+        dev = 'driver=' + 'hackrf'
         stream_args = ''
         tune_args = ['']
         settings = ['']
@@ -133,7 +133,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
                                   stream_args, tune_args, settings)
         self.soapy_custom_source_0.set_sample_rate(0, input_samp_rate)
         self.soapy_custom_source_0.set_bandwidth(0, 0)
-        self.soapy_custom_source_0.set_antenna(0, 'RX')
+        self.soapy_custom_source_0.set_antenna(0, 'TX/RX')
         self.soapy_custom_source_0.set_frequency(0, sdr_center_freq)
         self.soapy_custom_source_0.set_frequency_correction(0, 0)
         self.soapy_custom_source_0.set_gain_mode(0, False)
@@ -364,7 +364,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self._gain_win = qtgui.RangeWidget(self._gain_range, self.set_gain, "'gain'", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._gain_win)
         self.freq_xlating_fir_filter_xxx_0 = filter.freq_xlating_fir_filter_ccc((int(input_samp_rate/samp_rate)), lpf_taps, (freq - sdr_center_freq), input_samp_rate)
-        self.epy_block_1 = epy_block_1.blk(loiter_time=0.5, sdr_center_freq=sdr_center_freq, sdr_samp_rate=input_samp_rate, samp_rate=samp_rate, halow_channel_json_filename='/home/dragon/Documents/gr-halow/flowgraphs/halow_channels.json')
+        self.epy_block_1 = epy_block_1.blk(loiter_time=0.5, sdr_center_freq=sdr_center_freq, sdr_samp_rate=input_samp_rate, samp_rate=samp_rate, halow_channel_json_filename=halow_channel_json_filename)
         self.epy_block_0 = epy_block_0.blk(upper_detection_threshold=0.1, halow_channel_json_filename=halow_channel_json_filename)
         # Create the options list
         self._chan_est_options = [0, 1, 2, 3]
@@ -407,7 +407,6 @@ class halow_rx(gr.top_block, Qt.QWidget):
         ##################################################
         # Connections
         ##################################################
-        self.msg_connect((self.epy_block_1, 'tuning_control'), (self.epy_block_0, 'tune_in'))
         self.msg_connect((self.epy_block_1, 'freq_control'), (self.epy_block_0, 'freq_in'))
         self.msg_connect((self.epy_block_1, 'freq_control'), (self.freq_xlating_fir_filter_xxx_0, 'freq'))
         self.msg_connect((self.epy_block_1, 'tuning_control'), (self.soapy_custom_source_0, 'cmd'))
@@ -541,6 +540,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
     def set_halow_channel_json_filename(self, halow_channel_json_filename):
         self.halow_channel_json_filename = halow_channel_json_filename
         self.epy_block_0.halow_channel_json_filename = self.halow_channel_json_filename
+        self.epy_block_1.halow_channel_json_filename = self.halow_channel_json_filename
 
     def get_gain(self):
         return self.gain

@@ -2,11 +2,12 @@ import numpy as np
 from gnuradio import gr
 import pmt
 import json
+import os
 
 class blk(gr.sync_block):  
 
 
-    def __init__(self, upper_detection_threshold=0.2, halow_channel_json_filename="/home/dragon/Documents/gr-halow/flowgraphs/halow_channels.json"): 
+    def __init__(self, upper_detection_threshold=0.2, halow_channel_json_filename=""): 
         """arguments to this function show up as parameters in GRC"""
         gr.sync_block.__init__(
             self,
@@ -16,9 +17,11 @@ class blk(gr.sync_block):
         )
         self.upper_detection_threshold = upper_detection_threshold
         self.halow_channel_json_filename = halow_channel_json_filename
-        json_file = open(self.halow_channel_json_filename)
-        self.all_halow_channels = json.load(json_file)
-        json_file.close()
+        self.all_halow_channels = {}
+        if(os.path.isfile(halow_channel_json_filename)):
+            json_file = open(self.halow_channel_json_filename)
+            self.all_halow_channels = json.load(json_file)
+            json_file.close()
         self.port_freq_in = "freq_in"
         self.message_port_register_in(pmt.intern(self.port_freq_in))
         self.set_msg_handler(pmt.intern(self.port_freq_in), self.handle_freq_in)
