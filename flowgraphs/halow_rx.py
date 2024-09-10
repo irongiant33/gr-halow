@@ -6,7 +6,7 @@
 #
 # GNU Radio Python Flow Graph
 # Title: Halow Rx
-# GNU Radio version: 3.10.9.2
+# GNU Radio version: 3.10.10.0
 
 from PyQt5 import Qt
 from gnuradio import qtgui
@@ -69,7 +69,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self.samp_rate = samp_rate = 1e6
         self.input_samp_rate = input_samp_rate = 10e6
         self.filter_transition = filter_transition = 10e3
-        self.filter_cutoff = filter_cutoff = (samp_rate / 2) + (samp_rate /10)
+        self.filter_cutoff = filter_cutoff = (samp_rate / 2) - (samp_rate /10)
         self.window_size = window_size = 24
         self.sync_length = sync_length = 320
         self.stop_time = stop_time = 0.31
@@ -78,7 +78,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self.num_ofdm_subcarriers = num_ofdm_subcarriers = 32
         self.lpf_taps = lpf_taps = firdes.low_pass(1, input_samp_rate, filter_cutoff, filter_transition)
         self.lo_offset = lo_offset = 0
-        self.halow_channel_json_filename = halow_channel_json_filename = '/home/irongiant/Documents/gr-halow/flowgraphs/1mhz_halow_channels.json'
+        self.halow_channel_json_filename = halow_channel_json_filename = '/home/dragon/Documents/gr-halow/flowgraphs/1mhz_halow_channels.json'
         self.gain = gain = 0.75
         self.freq = freq = 920.5e6
         self.chan_est = chan_est = 0
@@ -124,7 +124,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
         # Create the radio buttons
         self.top_layout.addWidget(self._freq_tool_bar)
         self.soapy_custom_source_0 = None
-        dev = 'driver=' + 'hackrf'
+        dev = 'driver=' + 'airspy'
         stream_args = ''
         tune_args = ['']
         settings = ['']
@@ -133,7 +133,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
                                   stream_args, tune_args, settings)
         self.soapy_custom_source_0.set_sample_rate(0, input_samp_rate)
         self.soapy_custom_source_0.set_bandwidth(0, 0)
-        self.soapy_custom_source_0.set_antenna(0, 'TX/RX')
+        self.soapy_custom_source_0.set_antenna(0, 'RX')
         self.soapy_custom_source_0.set_frequency(0, sdr_center_freq)
         self.soapy_custom_source_0.set_frequency_correction(0, 0)
         self.soapy_custom_source_0.set_gain_mode(0, False)
@@ -408,6 +408,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
         # Connections
         ##################################################
         self.msg_connect((self.epy_block_1, 'freq_control'), (self.epy_block_0, 'freq_in'))
+        self.msg_connect((self.epy_block_1, 'tuning_control'), (self.epy_block_0, 'tune_in'))
         self.msg_connect((self.epy_block_1, 'freq_control'), (self.freq_xlating_fir_filter_xxx_0, 'freq'))
         self.msg_connect((self.epy_block_1, 'tuning_control'), (self.soapy_custom_source_0, 'cmd'))
         self.connect((self.blocks_complex_to_mag_0, 0), (self.blocks_divide_xx_0, 0))
@@ -449,7 +450,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
-        self.set_filter_cutoff((self.samp_rate / 2) + (self.samp_rate /10))
+        self.set_filter_cutoff((self.samp_rate / 2) - (self.samp_rate /10))
         self._samp_rate_callback(self.samp_rate)
         self.epy_block_1.samp_rate = self.samp_rate
         self.qtgui_time_sink_x_0_0.set_samp_rate(self.samp_rate)

@@ -81,7 +81,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: (samp_rate / 2) + (samp_rate /10)
+    value: (samp_rate / 2) - (samp_rate /10)
   states:
     bus_sink: false
     bus_source: false
@@ -188,7 +188,7 @@ blocks:
   id: variable
   parameters:
     comment: in seconds, 1mhz_mcs0 capture
-    value: '''/home/irongiant/Documents/gr-halow/flowgraphs/1mhz_halow_channels.json'''
+    value: '''/home/dragon/Documents/gr-halow/flowgraphs/1mhz_halow_channels.json'''
   states:
     bus_sink: false
     bus_source: false
@@ -508,6 +508,21 @@ blocks:
     coordinate: [88, 532.0]
     rotation: 180
     state: disabled
+- name: blocks_message_debug_0
+  id: blocks_message_debug
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    en_uvec: 'True'
+    log_level: trace
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [792, 584.0]
+    rotation: 0
+    state: disabled
 - name: blocks_moving_average_xx_0
   id: blocks_moving_average_xx
   parameters:
@@ -635,19 +650,26 @@ blocks:
       \ msg):\n        key = pmt.intern(\"freq\")\n        value = pmt.dict_ref(msg,\
       \ key, pmt.PMT_NIL) \n        if(value is not pmt.PMT_NIL):\n            self.offset_frequency\
       \ = pmt.to_double(value)\n\n    def channel_lookup(self):\n        channel_frequency\
-      \ = self.tune_frequency + self.offset_frequency\n        for channel, value\
-      \ in self.all_halow_channels.items():\n            if(value[\"freq\"] == channel_frequency):\n\
-      \                return (channel, value)\n        return (-1, -1)\n\n    def\
-      \ work(self, input_items, output_items):\n        # this block does not operate\
-      \ on samples\n        output_items[0][:] = input_items[0]\n\n        # find\
-      \ any identified wifi frames and print out the current channel\n        tags\
-      \ = self.get_tags_in_window(0, 0, len(input_items[0]))\n        channel = self.channel_lookup()\n\
-      \        for tag in tags:\n            key = pmt.to_python(tag.key)\n      \
-      \      value = pmt.to_python(tag.value)\n            if(np.abs(value) < self.upper_detection_threshold\
-      \ and channel[0] != -1):\n                channel_freq = channel[1][\"freq\"\
-      ]/1e6\n                channel_bw   = channel[1][\"bw\"]/1e6\n             \
-      \   print(f\"HaLow activity - channel {channel[0]}, freq {channel_freq} MHz,\
-      \ bw {channel_bw} MHz - {value:.3f}\")\n\n        return len(output_items[0])\n"
+      \ = self.tune_frequency + self.offset_frequency\n        #print(f\"{self.tune_frequency}\
+      \ {self.offset_frequency}\")\n        for channel, value in self.all_halow_channels.items():\n\
+      \            if(value[\"freq\"] == channel_frequency):\n                return\
+      \ (channel, value)\n        return (-1, -1)\n\n    def work(self, input_items,\
+      \ output_items):\n        # this block does not operate on samples\n       \
+      \ output_items[0][:] = input_items[0]\n\n        # find any identified wifi\
+      \ frames and print out the current channel\n        \n        \n        \n \
+      \       tags = self.get_tags_in_window(0, 0, len(input_items[0]))\n        channel\
+      \ = self.channel_lookup()\n        for tag in tags:\n            key = pmt.to_python(tag.key)\n\
+      \            value = pmt.to_python(tag.value)\n            #print(f\"{value}\
+      \ {self.upper_detection_threshold} {channel[0]}\")\n            if(np.abs(value)\
+      \ < self.upper_detection_threshold and channel[0] != -1):\n                tag_index\
+      \ = tag.offset - self.nitems_read(0)\n                average = 0\n        \
+      \        for i in range(tag_index, tag_index + 10):\n                    if(i\
+      \ < len(input_items[0])):\n                        average += np.real(input_items[0][i])\n\
+      \                #print(average/10)\n                if(average > self.upper_detection_threshold):\n\
+      \                    channel_freq = channel[1][\"freq\"]/1e6\n             \
+      \       channel_bw   = channel[1][\"bw\"]/1e6\n                    print(f\"\
+      HaLow activity - channel {channel[0]}, freq {channel_freq} MHz, bw {channel_bw}\
+      \ MHz - {value:.3f}\")\n\n        return len(output_items[0])\n"
     affinity: ''
     alias: ''
     comment: ''
@@ -663,7 +685,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1024, 912.0]
+    coordinate: [480, 720.0]
     rotation: 180
     state: enabled
 - name: epy_block_1
@@ -680,10 +702,10 @@ blocks:
       \        self.all_halow_channels = {}\n        if(os.path.isfile(halow_channel_json_filename)):\n\
       \            json_file = open(self.halow_channel_json_filename)\n          \
       \  self.all_halow_channels = json.load(json_file)\n            json_file.close()\n\
-      \        self.sdr_center_freq = sdr_center_freq\n        self.samp_rate = samp_rate\n\
-      \        self.sdr_samp_rate = sdr_samp_rate\n        self.port_freq_control\
-      \ = \"freq_control\"\n        self.port_tuning_control = \"tuning_control\"\n\
-      \        self.message_port_register_out(pmt.intern(self.port_freq_control))\n\
+      \        else:\n            print(\"incorrect file path!\")\n        self.sdr_center_freq\
+      \ = sdr_center_freq\n        self.samp_rate = samp_rate\n        self.sdr_samp_rate\
+      \ = sdr_samp_rate\n        self.port_freq_control = \"freq_control\"\n     \
+      \   self.port_tuning_control = \"tuning_control\"\n        self.message_port_register_out(pmt.intern(self.port_freq_control))\n\
       \        self.message_port_register_out(pmt.intern(self.port_tuning_control))\n\
       \        self.available_halow_channels = []\n        self.channel_index = 0\n\
       \        self.loiter_samples = int(loiter_time * samp_rate) # how many samples\
@@ -693,10 +715,12 @@ blocks:
       \ = 0 # initial offset of 0 unless there are available channels\n        if(len(self.available_halow_channels)\
       \ > 0):\n            freq_offset = self.available_halow_channels[self.channel_index][1][\"\
       freq\"] - self.sdr_center_freq\n        self.set_freq_message(freq_offset) #\
-      \ initial offset of 0\n\n    def find_available_channels(self):\n        self.available_halow_channels\
-      \ = []\n        for channel, value in self.all_halow_channels.items():\n   \
-      \         channel_lowerbound = value[\"freq\"] - value[\"bw\"]/2\n         \
-      \   channel_upperbound = value[\"freq\"] + value[\"bw\"]/2\n            radio_lowerbound\
+      \ initial offset of 0\n        self.set_tune_message(self.sdr_center_freq)\n\
+      \        print(f\"{len(self.available_halow_channels)} available halow channels\
+      \ in the current range\")\n\n    def find_available_channels(self):\n      \
+      \  self.available_halow_channels = []\n        for channel, value in self.all_halow_channels.items():\n\
+      \            channel_lowerbound = value[\"freq\"] - value[\"bw\"]/2\n      \
+      \      channel_upperbound = value[\"freq\"] + value[\"bw\"]/2\n            radio_lowerbound\
       \ = self.sdr_center_freq - self.sdr_samp_rate / 2\n            radio_upperbound\
       \ = self.sdr_center_freq + self.sdr_samp_rate / 2\n            if(channel_lowerbound\
       \ >= radio_lowerbound and channel_upperbound <= radio_upperbound):\n       \
@@ -740,8 +764,13 @@ blocks:
       \ = 0\n            self.channel_index = self.channel_index + 1\n           \
       \ # check for rollover condition\n            if(self.channel_index >= len(self.available_halow_channels)):\n\
       \                self.channel_index = 0\n                next_tuning_freq =\
-      \ self.find_next_tuning_freq()\n                self.set_tune_message(next_tuning_freq)\n\
-      \            if(len(self.available_halow_channels) > 0):\n                self.set_freq_message(self.available_halow_channels[self.channel_index][1][\"\
+      \ self.find_next_tuning_freq()\n                print(f\"SDR frequency is {next_tuning_freq/1e6:.2f}\
+      \ MHz\")\n                self.set_tune_message(next_tuning_freq)\n        \
+      \    if(len(self.available_halow_channels) > 0):\n                print(f\"\
+      current channel is {self.available_halow_channels[self.channel_index][0]} freq\
+      \ {self.available_halow_channels[self.channel_index][1]['freq']/1e6:.2f} MHz,\
+      \ bw {self.available_halow_channels[self.channel_index][1]['bw']/1e6:.2f} MHz\"\
+      )\n                self.set_freq_message(self.available_halow_channels[self.channel_index][1][\"\
       freq\"] - self.sdr_center_freq)\n\n        # control FIR filter and tuner\n\
       \        self.message_port_pub(pmt.intern(self.port_freq_control), self.freq_message)\n\
       \        self.message_port_pub(pmt.intern(self.port_tuning_control), self.tune_message)\n\
@@ -767,7 +796,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [344, 376.0]
+    coordinate: [400, 388.0]
     rotation: 0
     state: enabled
 - name: foo_wireshark_connector_0
@@ -1353,7 +1382,7 @@ blocks:
     agc0: 'False'
     agc1: 'False'
     alias: ''
-    antenna0: TX/RX
+    antenna0: RX
     antenna1: ''
     bandwidth0: '0'
     bandwidth1: '0'
@@ -1365,7 +1394,7 @@ blocks:
     dc_removal0: 'False'
     dc_removal1: 'True'
     dev_args: ''
-    driver: hackrf
+    driver: airspy
     freq_correction0: '0'
     freq_correction1: '0'
     gain0: '10'
@@ -1414,6 +1443,8 @@ connections:
 - [epy_block_1, '0', qtgui_time_sink_x_2, '0']
 - [epy_block_1, freq_control, epy_block_0, freq_in]
 - [epy_block_1, freq_control, freq_xlating_fir_filter_xxx_0, freq]
+- [epy_block_1, tuning_control, blocks_message_debug_0, print]
+- [epy_block_1, tuning_control, epy_block_0, tune_in]
 - [epy_block_1, tuning_control, soapy_custom_source_0, cmd]
 - [foo_wireshark_connector_0, '0', blocks_file_sink_0, '0']
 - [freq_xlating_fir_filter_xxx_0, '0', blocks_tag_gate_0, '0']
@@ -1425,4 +1456,4 @@ connections:
 
 metadata:
   file_format: 1
-  grc_version: 3.10.9.2
+  grc_version: 3.10.10.0

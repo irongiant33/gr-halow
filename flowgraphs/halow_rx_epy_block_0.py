@@ -45,6 +45,7 @@ class blk(gr.sync_block):
 
     def channel_lookup(self):
         channel_frequency = self.tune_frequency + self.offset_frequency
+        #print(f"{self.tune_frequency} {self.offset_frequency}")
         for channel, value in self.all_halow_channels.items():
             if(value["freq"] == channel_frequency):
                 return (channel, value)
@@ -55,14 +56,25 @@ class blk(gr.sync_block):
         output_items[0][:] = input_items[0]
 
         # find any identified wifi frames and print out the current channel
+        
+        
+        
         tags = self.get_tags_in_window(0, 0, len(input_items[0]))
         channel = self.channel_lookup()
         for tag in tags:
             key = pmt.to_python(tag.key)
             value = pmt.to_python(tag.value)
+            #print(f"{value} {self.upper_detection_threshold} {channel[0]}")
             if(np.abs(value) < self.upper_detection_threshold and channel[0] != -1):
-                channel_freq = channel[1]["freq"]/1e6
-                channel_bw   = channel[1]["bw"]/1e6
-                print(f"HaLow activity - channel {channel[0]}, freq {channel_freq} MHz, bw {channel_bw} MHz - {value:.3f}")
+                tag_index = tag.offset - self.nitems_read(0)
+                average = 0
+                for i in range(tag_index, tag_index + 10):
+                    if(i < len(input_items[0])):
+                        average += np.real(input_items[0][i])
+                #print(average/10)
+                if(average > self.upper_detection_threshold):
+                    channel_freq = channel[1]["freq"]/1e6
+                    channel_bw   = channel[1]["bw"]/1e6
+                    print(f"HaLow activity - channel {channel[0]}, freq {channel_freq} MHz, bw {channel_bw} MHz - {value:.3f}")
 
         return len(output_items[0])
