@@ -76,7 +76,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
         self.loiter_time = loiter_time = 0.5
         self.halow_channel_json_filename = halow_channel_json_filename = '/home/dragon/Documents/gr-halow/flowgraphs/1mhz_halow_channels.json'
         self.guard_interval_size = guard_interval_size = 8
-        self.gain = gain = 10
+        self.gain = gain = 3
         self.driver = driver = "airspy"
         self.correlation_threshold = correlation_threshold = 0.4
         self.activity_threshold = activity_threshold = -80
@@ -85,7 +85,7 @@ class halow_rx(gr.top_block, Qt.QWidget):
         # Blocks
         ##################################################
 
-        self._gain_range = qtgui.Range(0, 21, 1, 10, 200)
+        self._gain_range = qtgui.Range(0, 21, 1, 3, 200)
         self._gain_win = qtgui.RangeWidget(self._gain_range, self.set_gain, "'gain'", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._gain_win)
         self.soapy_custom_source_0 = None
