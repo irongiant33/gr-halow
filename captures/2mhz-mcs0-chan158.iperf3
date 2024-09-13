@@ -1,0 +1,23 @@
+client: `iperf3 -c 192.168.100.1 -p 4444`
+server: `iperf3 -s -p 4444`
+
+root@ahuc7292u-fcce48:/usr/bin# ./iperf3 -c 192.168.100.1 -p 4444
+Connecting to host 192.168.100.1, port 4444
+[  5] local 192.168.100.2 port 55198 connected to 192.168.100.1 port 4444
+[ ID] Interval           Transfer     Bitrate         Retr  Cwnd
+[  5]   0.00-1.00   sec   170 KBytes  1.39 Mbits/sec    1   60.8 KBytes
+[  5]   1.00-2.00   sec  93.3 KBytes   764 Kbits/sec    0   83.4 KBytes
+[  5]   2.00-3.00   sec  96.2 KBytes   788 Kbits/sec    4   58.0 KBytes
+[  5]   3.00-4.00   sec  0.00 Bytes  0.00 bits/sec    1   36.8 KBytes
+[  5]   4.00-5.00   sec   127 KBytes  1.04 Mbits/sec    1   45.2 KBytes
+[  5]   5.00-6.00   sec  0.00 Bytes  0.00 bits/sec    1   32.5 KBytes
+[  5]   6.00-7.00   sec   127 KBytes  1.04 Mbits/sec    1   33.9 KBytes
+[  5]   7.00-8.00   sec  0.00 Bytes  0.00 bits/sec    0   38.2 KBytes
+[  5]   8.00-9.00   sec   127 KBytes  1.04 Mbits/sec    1   32.5 KBytes
+[  5]   9.00-10.00  sec  0.00 Bytes  0.00 bits/sec    1   29.7 KBytes
+- - - - - - - - - - - - - - - - - - - - - - - - -
+[ ID] Interval           Transfer     Bitrate         Retr
+[  5]   0.00-10.00  sec   741 KBytes   607 Kbits/sec   11             sender
+[  5]   0.00-10.46  sec   553 KBytes   433 Kbits/sec                  receiver
+
+iperf Done.

@@ -192,6 +192,10 @@ Secondly, I was able to update the LONG FIR filter kernel in sync_long_impl.cc u
 
 I also captured [sync-plots.png](media/sync-plots.png) but there are multiple tags which I believe is from the wrong kernel convolving over the WiFi samples. WiFi sync short and WiFi sync long are decimating blocks, but they do not decimate linearly; it is based on whether the threshold is exceeded in the autocorrelation phase, so I just guessed & refined my guesses for how many samples the plot should show. I knew 4 frames needed to appear so that is what we see in the plots. There is also a clean tag at the start of each frame which lets me know that we are likely good to go to the next phase of the processing stream.
 
+Useful papers from the developer of gr-ieee80211. [Demo: Deocding IEEE 802.11a/g/p OFDM in Software using GNU Radio](https://www.bastibl.net/bib/bloessl2013decoding/bloessl2013decoding.pdf), [An IEEE 802.11a/g/p OFDM Receiver for GNU Radio](https://conferences.sigcomm.org/sigcomm/2013/papers/srif/p9.pdf).
+
+Schmidl and Cox Synchronization for OFDM: [DSPillustrations.com](https://dspillustrations.com/pages/posts/misc/schmidlcox-synchronization-for-ofdm.html#:~:text=Schmidl%20and%20Cox%20propose%20a%20synchronization%20algorithm%20that,repeated%20parts%2C%20prepended%20by%20a%20cyclic%20prefix%20%28CP%29.)
+
 ## WiFi Frame Equalization
 
 The role of frame equalization is to correct for the frequency offset detected in the synchronization step and to also normalize the power on each of the data subcarriers so that the IQ constellation can be sliced and turned into binary data. 
@@ -222,6 +226,8 @@ ofdm is like threading in RF. fdm is multiprocessing. It lowers the rate of each
 
 ## Todo (priority order)
 
+- [ ] Check out GNU Radio OFDM tutorial: https://wiki.gnuradio.org/index.php/Basic_OFDM_Tutorial
+- [ ] Any good info from GNU Radio suggested reading? https://wiki.gnuradio.org/index.php?title=SuggestedReading
 - [ ] section 23.3.9.5 p.3251 states "repetition for 1 MHz MCS 10. There are 12 data bits followed by the same 12 data bits repeated, but those repeated 12 data bits are first XORed by the sequence `s=[1 0 0 0 0 1 0 1 0 1 1 1]`. After this, the bits are sent to the BCC interleaver (if BCC encoded) or the LDPC interleaver (if LDPC encoded). I think this just applies to MCS 10 data though, not the MCS 10 SIG field.
 - [ ] EQN 23-57 on p.3258 looks a lot like the S1G_SHORT equation 23-55 on the same page. Does this mean you should only be taking the output of SYNC_SHORT? 
 - [ ] how to decode since viterbi is not used for halow. binary convolutional code (BCC) or LDPC is used. How to do this for the SIG field that "is BCC encoded at rate R=1/2" p.3247
