@@ -1,0 +1,24 @@
+{
+  "global": {
+    "core:datatype": "cf32_le",
+    "core:sample_rate": 10000000.0,
+    "core:version": "1.0.0",
+    "core:author": "Sam Miller",
+    "core:description": "capture channel 43, 1 MHz channel centered at 915.5 MHz between two Alfa HaLow-U nodes, no encryption with MCS0 no rate control",
+    "core:recorder": "WarDragon with AirSpyR2 running GNU Radio 3.10.10, halow-capture.grc - gain value of 3 within 10 feet of both HaLow devices"
+  },
+  "captures": [
+    {
+      "core:sample_start": 0,
+      "core:datetime": "2024-09-13T16:51:00.000Z",
+      "core:frequency": 917000000.0
+    }
+  ],
+  "annotations": [
+    {
+      "core:comment": "gnuradioconf is the mesh network name of the HaLow-U network.",
+      "core:comment": "ran iperf3 between clients connected to each of the HaLow-U's, reported in a *.iperf3 capture of the same name.",
+      "core:comment": "start_time=7.607, stop_time=7.674 for halow_rx.grc generated many of the static photos such as sync-plots.png"
+    }
+  ]
+}

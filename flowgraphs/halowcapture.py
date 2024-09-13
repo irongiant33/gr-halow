@@ -6,37 +6,24 @@
 #
 # GNU Radio Python Flow Graph
 # Title: Not titled yet
-# GNU Radio version: 3.10.4.0
-
-from packaging.version import Version as StrictVersion
-
-if __name__ == '__main__':
-    import ctypes
-    import sys
-    if sys.platform.startswith('linux'):
-        try:
-            x11 = ctypes.cdll.LoadLibrary('libX11.so')
-            x11.XInitThreads()
-        except:
-            print("Warning: failed to XInitThreads()")
+# GNU Radio version: 3.10.10.0
 
 from PyQt5 import Qt
 from gnuradio import qtgui
-from gnuradio.filter import firdes
-import sip
 from gnuradio import blocks
 import pmt
 from gnuradio import gr
+from gnuradio.filter import firdes
 from gnuradio.fft import window
 import sys
 import signal
+from PyQt5 import Qt
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
+import sip
 
 
-
-from gnuradio import qtgui
 
 class halowcapture(gr.top_block, Qt.QWidget):
 
@@ -47,8 +34,8 @@ class halowcapture(gr.top_block, Qt.QWidget):
         qtgui.util.check_set_qss()
         try:
             self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
-        except:
-            pass
+        except BaseException as exc:
+            print(f"Qt GUI: Could not set Icon: {str(exc)}", file=sys.stderr)
         self.top_scroll_layout = Qt.QVBoxLayout()
         self.setLayout(self.top_scroll_layout)
         self.top_scroll = Qt.QScrollArea()
@@ -64,25 +51,22 @@ class halowcapture(gr.top_block, Qt.QWidget):
         self.settings = Qt.QSettings("GNU Radio", "halowcapture")
 
         try:
-            if StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
-                self.restoreGeometry(self.settings.value("geometry").toByteArray())
-            else:
-                self.restoreGeometry(self.settings.value("geometry"))
-        except:
-            pass
+            geometry = self.settings.value("geometry")
+            if geometry:
+                self.restoreGeometry(geometry)
+        except BaseException as exc:
+            print(f"Qt GUI: Could not restore geometry: {str(exc)}", file=sys.stderr)
 
         ##################################################
         # Variables
         ##################################################
         self.samp_rate = samp_rate = int(10e6)
-        self.offset_freq = offset_freq = 2.5e6
-        self.filter_transition = filter_transition = 10e3
-        self.filter_cutoff = filter_cutoff = 600e3
-        self.center_freq = center_freq = int(918e6)
+        self.center_freq = center_freq = int(915.5e6)
 
         ##################################################
         # Blocks
         ##################################################
+
         self.qtgui_waterfall_sink_x_0 = qtgui.waterfall_sink_c(
             1024, #size
             window.WIN_BLACKMAN_hARRIS, #wintype
@@ -119,7 +103,7 @@ class halowcapture(gr.top_block, Qt.QWidget):
 
         self.top_layout.addWidget(self._qtgui_waterfall_sink_x_0_win)
         self.blocks_throttle_0 = blocks.throttle(gr.sizeof_gr_complex*1, samp_rate,True)
-        self.blocks_sigmf_source_minimal_0 = blocks.file_source(gr.sizeof_gr_complex, '/home/dragon/Documents/gr-halow/captures/halow-capture-4mhz.sigmf-data', False, 0, 0)
+        self.blocks_sigmf_source_minimal_0 = blocks.file_source(gr.sizeof_gr_complex, '/home/dragon/Documents/gr-halow/captures/4mhz-mcs1-chan164.sigmf-data', False, 0, 0)
         self.blocks_sigmf_source_minimal_0.set_begin_tag(pmt.PMT_NIL)
 
 
@@ -146,24 +130,6 @@ class halowcapture(gr.top_block, Qt.QWidget):
         self.blocks_throttle_0.set_sample_rate(self.samp_rate)
         self.qtgui_waterfall_sink_x_0.set_frequency_range(self.center_freq, self.samp_rate)
 
-    def get_offset_freq(self):
-        return self.offset_freq
-
-    def set_offset_freq(self, offset_freq):
-        self.offset_freq = offset_freq
-
-    def get_filter_transition(self):
-        return self.filter_transition
-
-    def set_filter_transition(self, filter_transition):
-        self.filter_transition = filter_transition
-
-    def get_filter_cutoff(self):
-        return self.filter_cutoff
-
-    def set_filter_cutoff(self, filter_cutoff):
-        self.filter_cutoff = filter_cutoff
-
     def get_center_freq(self):
         return self.center_freq
 
@@ -176,9 +142,6 @@ class halowcapture(gr.top_block, Qt.QWidget):
 
 def main(top_block_cls=halowcapture, options=None):
 
-    if StrictVersion("4.5.0") <= StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
-        style = gr.prefs().get_string('qtgui', 'style', 'raster')
-        Qt.QApplication.setGraphicsSystem(style)
     qapp = Qt.QApplication(sys.argv)
 
     tb = top_block_cls()

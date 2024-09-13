@@ -2,11 +2,12 @@ import numpy as np
 from gnuradio import gr
 import pmt
 import json
+import os
 
 class blk(gr.sync_block): 
     """Embedded Python Block example - a simple multiply const"""
 
-    def __init__(self, loiter_time=2, sdr_center_freq=902e6, sdr_samp_rate=10e6, samp_rate=1e6, halow_channel_json_filename="/home/dragon/Documents/gr-halow/flowgraphs/halow_channels.json"):
+    def __init__(self, loiter_time=2, sdr_center_freq=902e6, sdr_samp_rate=10e6, samp_rate=1e6, debug=False, halow_channel_json_filename=""):
         """arguments to this function show up as parameters in GRC"""
         gr.sync_block.__init__(
             self,
@@ -15,16 +16,21 @@ class blk(gr.sync_block):
             out_sig=[np.complex64]
         )
         self.halow_channel_json_filename = halow_channel_json_filename
-        json_file = open(self.halow_channel_json_filename)
+        self.debug = debug
+        self.all_halow_channels = {}
+        if(os.path.isfile(halow_channel_json_filename)):
+            json_file = open(self.halow_channel_json_filename)
+            self.all_halow_channels = json.load(json_file)
+            json_file.close()
+        else:
+            print("incorrect file path!")
         self.sdr_center_freq = sdr_center_freq
         self.samp_rate = samp_rate
         self.sdr_samp_rate = sdr_samp_rate
-        self.all_halow_channels = json.load(json_file)
         self.port_freq_control = "freq_control"
         self.port_tuning_control = "tuning_control"
         self.message_port_register_out(pmt.intern(self.port_freq_control))
         self.message_port_register_out(pmt.intern(self.port_tuning_control))
-        json_file.close()
         self.available_halow_channels = []
         self.channel_index = 0
         self.loiter_samples = int(loiter_time * samp_rate) # how many samples to read before switching channels
@@ -38,6 +44,8 @@ class blk(gr.sync_block):
         if(len(self.available_halow_channels) > 0):
             freq_offset = self.available_halow_channels[self.channel_index][1]["freq"] - self.sdr_center_freq
         self.set_freq_message(freq_offset) # initial offset of 0
+        self.set_tune_message(self.sdr_center_freq)
+        print(f"{len(self.available_halow_channels)} available halow channels in the current range")
 
     def find_available_channels(self):
         self.available_halow_channels = []
@@ -104,8 +112,12 @@ class blk(gr.sync_block):
             if(self.channel_index >= len(self.available_halow_channels)):
                 self.channel_index = 0
                 next_tuning_freq = self.find_next_tuning_freq()
+                if(self.debug):
+                    print(f"SDR frequency is {next_tuning_freq/1e6:.2f} MHz")
                 self.set_tune_message(next_tuning_freq)
             if(len(self.available_halow_channels) > 0):
+                if(self.debug):
+                    print(f"current channel is {self.available_halow_channels[self.channel_index][0]} freq {self.available_halow_channels[self.channel_index][1]['freq']/1e6:.2f} MHz, bw {self.available_halow_channels[self.channel_index][1]['bw']/1e6:.2f} MHz")
                 self.set_freq_message(self.available_halow_channels[self.channel_index][1]["freq"] - self.sdr_center_freq)
 
         # control FIR filter and tuner

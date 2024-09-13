@@ -37,7 +37,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: int(918e6)
+    value: int(915.5e6)
   states:
     bus_sink: false
     bus_source: false
@@ -56,7 +56,7 @@ blocks:
     bus_structure: null
     coordinate: [448, 44.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: filter_transition
   id: variable
   parameters:
@@ -68,7 +68,7 @@ blocks:
     bus_structure: null
     coordinate: [560, 52.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: offset_freq
   id: variable
   parameters:
@@ -80,7 +80,7 @@ blocks:
     bus_structure: null
     coordinate: [696, 28.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: samp_rate
   id: variable
   parameters:
@@ -103,7 +103,8 @@ blocks:
     comment: 'don''t forget to change your filename after running to
 
       avoid overwriting your captures'
-    description: capture channel 48 between two Alfa HaLow-U nodes, no encryption
+    description: capture channel 164, 4 MHz channel centered at 918 MHz between two
+      Alfa HaLow-U nodes, no encryption with MCS1 no rate control
     filename: /home/dragon/Documents/gr-halow/captures/filenamehere
     hw_info: ''
     sample_rate: samp_rate
@@ -112,7 +113,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [952, 276.0]
+    coordinate: [960, 276.0]
     rotation: 0
     state: disabled
 - name: blocks_sigmf_source_minimal_0
@@ -122,7 +123,7 @@ blocks:
     alias: ''
     begin_tag: pmt.PMT_NIL
     comment: ''
-    file: /home/dragon/Documents/gr-halow/captures/halow-capture-4mhz.sigmf-data
+    file: /home/dragon/Documents/gr-halow/captures/4mhz-mcs1-chan164.sigmf-data
     length: '0'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -254,7 +255,7 @@ blocks:
     nchan: '1'
     nco_freq0: '0'
     nco_freq1: '0'
-    overall_gain0: '10'
+    overall_gain0: '3'
     overall_gain1: '10'
     pga_gain0: '24'
     pga_gain1: '24'
@@ -282,7 +283,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [272, 324.0]
+    coordinate: [432, 260.0]
     rotation: 0
     state: disabled
 
@@ -293,4 +294,4 @@ connections:
 
 metadata:
   file_format: 1
-  grc_version: 3.10.4.0
+  grc_version: 3.10.10.0
